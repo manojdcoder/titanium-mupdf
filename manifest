@@ -1,0 +1,18 @@
+#
+# this is your module manifest and used by Titanium
+# during compilation, packaging, distribution, etc.
+#
+version: 1.0
+apiversion: 2
+description: Titanium extension for MuPDF
+author: Manoj Kumar
+license: Specify your license
+copyright: @ 2014
+
+
+# these should not be edited
+name: mupdf
+moduleid: com.mykingdom.mupdf
+guid: 00d8ac2f-d0fc-47d2-afdb-7af780ae4bad
+platform: android
+minsdk: 3.2.3.GA
