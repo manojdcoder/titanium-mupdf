@@ -69,4 +69,8 @@ win.addEventListener("open", function(e) {
 	activity.invalidateOptionsMenu();
 });
 
+Ti.Gesture.addEventListener("orientationchange", function() {
+	pdfReader.setCurrentPage(pdfReader.getCurrentPage());
+});
+
 win.open(); 

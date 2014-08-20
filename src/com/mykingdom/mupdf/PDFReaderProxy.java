@@ -24,11 +24,14 @@ import org.appcelerator.titanium.view.TiCompositeLayout;
 import org.appcelerator.titanium.view.TiCompositeLayout.LayoutArrangement;
 import org.appcelerator.titanium.view.TiUIView;
 
-import com.artifex.mupdf.MuPDFCore;
-import com.artifex.mupdf.MuPDFPageAdapter;
-import com.artifex.mupdf.OutlineActivityData;
-import com.artifex.mupdf.PageView;
-import com.artifex.mupdf.ReaderView;
+import com.artifex.mupdflib.FilePicker;
+import com.artifex.mupdflib.MuPDFCore;
+import com.artifex.mupdflib.MuPDFPageAdapter;
+import com.artifex.mupdflib.MuPDFReaderView;
+import com.artifex.mupdflib.PDFPreviewGridActivityData;
+import com.artifex.mupdflib.PageView;
+import com.artifex.mupdflib.ReaderView;
+import com.artifex.mupdflib.FilePicker.FilePickerSupport;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -48,7 +51,7 @@ public class PDFReaderProxy extends TiViewProxy {
 	private static final int MSG_FIRST_ID = TiViewProxy.MSG_LAST_ID + 1;
 	private static final int MSG_SET_CURRENT_PAGE = MSG_FIRST_ID + 100;
 
-	private class PDFReaderView extends TiUIView {
+	private class PDFReaderView extends TiUIView implements FilePickerSupport {
 
 		// Static Properties
 		public static final String PROPERTY_FILE_PATH = "file";
@@ -61,7 +64,7 @@ public class PDFReaderProxy extends TiViewProxy {
 
 		private final int TAP_PAGE_MARGIN = 5;
 		private String mFileName;
-		private ReaderView mDocView;
+		private MuPDFReaderView mDocView;
 		private MuPDFCore core;
 		private TiApplication tiApplication;
 		private int currentPage;
@@ -87,44 +90,9 @@ public class PDFReaderProxy extends TiViewProxy {
 
 			TiCompositeLayout view = new TiCompositeLayout(proxy.getActivity(),
 					arrangement);
-			mDocView = new ReaderView(tiApplication) {
-
-				public boolean onSingleTapUp(MotionEvent e) {
-					if (e.getX() < super.getWidth() / TAP_PAGE_MARGIN) {
-						super.moveToPrevious();
-					} else if (e.getX() > super.getWidth()
-							* (TAP_PAGE_MARGIN - 1) / TAP_PAGE_MARGIN) {
-						super.moveToNext();
-					}
-					if (getProxy().hasListeners(EVENT_CLICK)) {
-						KrollDict data = new KrollDict();
-						data.put(PROPERTY_X, e.getX());
-						data.put(PROPERTY_Y, e.getY());
-						getProxy().fireEvent(EVENT_CLICK, data);
-					}
-					return super.onSingleTapUp(e);
-				}
-
-				public boolean onScroll(MotionEvent e1, MotionEvent e2,
-						float distanceX, float distanceY) {
-					return super.onScroll(e1, e2, distanceX, distanceY);
-				}
-
-				public boolean onScaleBegin(ScaleGestureDetector d) {
-					// Disabled showing the buttons until next touch.
-					// Not sure why this is needed, but without it
-					// pinch zoom can make the buttons appear
-					return super.onScaleBegin(d);
-				}
-
-				public boolean onTouchEvent(MotionEvent event) {
-					return super.onTouchEvent(event);
-				}
-
+			mDocView = new MuPDFReaderView(getActivity()) {
+				@Override
 				protected void onMoveToChild(int i) {
-					if (core == null)
-						return;
-					// converting from 0 based index to 1
 					currentPage = i + 1;
 					if (getProxy().hasListeners(EVENT_PAGE_CHANGED)) {
 						KrollDict data = new KrollDict();
@@ -132,23 +100,14 @@ public class PDFReaderProxy extends TiViewProxy {
 						data.put(PROPERTY_PAGE_COUNT, pageCount);
 						getProxy().fireEvent(EVENT_PAGE_CHANGED, data);
 					}
-				}
-
-				protected void onSettle(View v) {
-					// When the layout has settled ask the page to render
-					// in HQ
-					((PageView) v).addHq();
-				}
-
-				protected void onUnsettle(View v) {
-					// When something changes making the previous settled view
-					// no longer appropriate, tell the page to remove HQ
-					((PageView) v).removeHq();
+					super.onMoveToChild(i);
 				}
 
 				@Override
-				protected void onNotInUse(View v) {
-					((PageView) v).releaseResources();
+				protected void onTapMainDocArea() {
+					if (getProxy().hasListeners(EVENT_CLICK)) {
+						getProxy().fireEvent(EVENT_CLICK, null);
+					}
 				}
 			};
 			view.addView(mDocView);
@@ -167,8 +126,8 @@ public class PDFReaderProxy extends TiViewProxy {
 						Log.i(LCAT, "PDF exists, trying to load");
 						core = openFile(Uri.decode(Uri.fromFile(file)
 								.getEncodedPath()));
-						mDocView.setAdapter(new MuPDFPageAdapter(tiApplication,
-								core));
+						mDocView.setAdapter(new MuPDFPageAdapter(getActivity(),
+								this, core));
 						pageCount = core.countPages();
 						currentPage = 1;
 					}
@@ -188,9 +147,10 @@ public class PDFReaderProxy extends TiViewProxy {
 					: path.substring(lastSlashPos + 1));
 			System.out.println("Trying to open " + path);
 			try {
-				core = new MuPDFCore(path);
+				core = new MuPDFCore(getActivity(), path);
 				// New file: drop the old outline data
-				OutlineActivityData.set(null);
+				// OutlineActivityData.set(null);
+				PDFPreviewGridActivityData.set(null);
 			} catch (Exception e) {
 				System.out.println(e);
 				return null;
@@ -221,6 +181,11 @@ public class PDFReaderProxy extends TiViewProxy {
 			if (core == null)
 				return;
 			mDocView.moveToPrevious();
+		}
+
+		@Override
+		public void performPickFor(FilePicker picker) {
+
 		}
 
 	}

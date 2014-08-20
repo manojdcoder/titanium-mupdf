@@ -13,5 +13,6 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Applications/android-sdk/extras/android/support/v7/appcompat/libs/android-support-v4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
