@@ -2,8 +2,8 @@
 # this is your module manifest and used by Titanium
 # during compilation, packaging, distribution, etc.
 #
-version: 1.1
-apiversion: 2
+version: 1.2
+apiversion: 3
 description: Titanium extension for MuPDF
 author: Manoj Kumar
 license: Specify your license

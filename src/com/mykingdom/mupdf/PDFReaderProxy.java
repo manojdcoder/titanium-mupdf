@@ -9,8 +9,10 @@
 package com.mykingdom.mupdf;
 
 import java.io.File;
+import java.util.HashMap;
 
 import org.appcelerator.kroll.KrollDict;
+import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.titanium.TiApplication;
@@ -31,7 +33,9 @@ import com.artifex.mupdflib.MuPDFReaderView;
 import com.artifex.mupdflib.PDFPreviewGridActivityData;
 import com.artifex.mupdflib.PageView;
 import com.artifex.mupdflib.ReaderView;
+import com.artifex.mupdflib.SearchTaskResult;
 import com.artifex.mupdflib.FilePicker.FilePickerSupport;
+import com.artifex.mupdflib.SearchTask;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -66,6 +70,8 @@ public class PDFReaderProxy extends TiViewProxy {
 		private String mFileName;
 		private MuPDFReaderView mDocView;
 		private MuPDFCore core;
+		private SearchTask mSearchTask;
+		private KrollFunction mSearchCallback;
 		private TiApplication tiApplication;
 		private int currentPage;
 		private int pageCount;
@@ -148,6 +154,34 @@ public class PDFReaderProxy extends TiViewProxy {
 			System.out.println("Trying to open " + path);
 			try {
 				core = new MuPDFCore(getActivity(), path);
+				mSearchTask = new SearchTask(tiApplication, core) {
+
+					@Override
+					protected void onTextFound(SearchTaskResult result) {
+						SearchTaskResult.set(result);
+						mDocView.setDisplayedViewIndex(result.pageNumber);
+						mDocView.resetupChildren();
+						if (mSearchCallback != null) {
+							HashMap<String, Object> params = new HashMap<String, Object>();
+							params.put("count", result.searchBoxes.length);
+							params.put("pageNumber", result.pageNumber);
+							params.put("error", false);
+							params.put("success", true);
+							mSearchCallback.call(getKrollObject(), params);
+						}
+					}
+
+					@Override
+					protected void onTextNotFound(int errorCode) {
+						if (mSearchCallback != null) {
+							HashMap<String, Object> params = new HashMap<String, Object>();
+							params.put("error", true);
+							params.put("success", false);
+							params.put("code", errorCode);
+							mSearchCallback.call(getKrollObject(), params);
+						}
+					}
+				};
 				// New file: drop the old outline data
 				// OutlineActivityData.set(null);
 				PDFPreviewGridActivityData.set(null);
@@ -181,6 +215,19 @@ public class PDFReaderProxy extends TiViewProxy {
 			if (core == null)
 				return;
 			mDocView.moveToPrevious();
+		}
+
+		public void onSearch(KrollFunction callback) {
+			mSearchCallback = callback;
+		}
+
+		public void search(String key, int direction) {
+			if (mSearchTask == null)
+				return;
+			int displayPage = mDocView.getDisplayedViewIndex();
+			SearchTaskResult r = SearchTaskResult.get();
+			int searchPage = r != null ? r.pageNumber : -1;
+			mSearchTask.go(key, direction, displayPage, searchPage);
 		}
 
 		@Override
@@ -260,5 +307,15 @@ public class PDFReaderProxy extends TiViewProxy {
 	@Kroll.method
 	public void moveToPrevious() {
 		getPDFReaderView().moveToPrevious();
+	}
+
+	@Kroll.method
+	public void onSearch(KrollFunction callback) {
+		getPDFReaderView().onSearch(callback);
+	}
+
+	@Kroll.method
+	public void search(String key, int direction) {
+		getPDFReaderView().search(key, direction);
 	}
 }

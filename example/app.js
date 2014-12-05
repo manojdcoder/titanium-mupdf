@@ -65,12 +65,40 @@ win.addEventListener("open", function(e) {
 		nextItem.addEventListener("click", function(e) {
 			pdfReader.moveToNext();
 		});
+		var searchPreviousItem = e.menu.add({
+			title : "Search Previous",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+		});
+		searchPreviousItem.addEventListener("click", function(e) {
+			pdfReader.search("java", -1);
+		});
+		var searchNextItem = e.menu.add({
+			title : "Search Next",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+		});
+		searchNextItem.addEventListener("click", function(e) {
+			pdfReader.search("java", 1);
+		});
 	};
 	activity.invalidateOptionsMenu();
 });
+
+pdfReader.onSearch(searchResult);
+
+function searchResult(result) {
+	console.log(pdfReader.ERROR_NO_FURTHER_OCCURRENCES_FOUND);
+	if (result.error) {
+		if (result.code == READER_MODULE.ERROR_TEXT_NOT_FOUND) {
+			alert("No matches found");
+		} else if (result.code == READER_MODULE.ERROR_NO_FURTHER_OCCURRENCES_FOUND) {
+			alert("No more occurrences on the given direction");
+		}
+	}
+	console.log(result);
+}
 
 Ti.Gesture.addEventListener("orientationchange", function() {
 	pdfReader.setCurrentPage(pdfReader.getCurrentPage());
 });
 
-win.open(); 
+win.open();

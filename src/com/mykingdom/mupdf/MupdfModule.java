@@ -14,49 +14,45 @@ import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.kroll.common.Log;
 
-@Kroll.module(name="Mupdf", id="com.mykingdom.mupdf")
-public class MupdfModule extends KrollModule
-{
+@Kroll.module(name = "Mupdf", id = "com.mykingdom.mupdf")
+public class MupdfModule extends KrollModule {
 
 	// Standard Debugging variables
 	private static final String TAG = "MupdfModule";
+	@Kroll.constant public static final int ERROR_TEXT_NOT_FOUND = 404;
+	@Kroll.constant public static final int ERROR_NO_FURTHER_OCCURRENCES_FOUND = 402;
 
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
-	
-	public MupdfModule()
-	{
+
+	public MupdfModule() {
 		super();
 	}
 
 	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app)
-	{
+	public static void onAppCreate(TiApplication app) {
 		Log.d(TAG, "inside onAppCreate");
-		// put module init code that needs to run when the application is created
+		// put module init code that needs to run when the application is
+		// created
 	}
 
 	// Methods
 	@Kroll.method
-	public String example()
-	{
+	public String example() {
 		Log.d(TAG, "example called");
 		return "hello world";
 	}
-	
+
 	// Properties
 	@Kroll.getProperty
-	public String getExampleProp()
-	{
+	public String getExampleProp() {
 		Log.d(TAG, "get example property");
 		return "hello world";
 	}
-	
-	
+
 	@Kroll.setProperty
 	public void setExampleProp(String value) {
 		Log.d(TAG, "set example property: " + value);
 	}
 
 }
-
