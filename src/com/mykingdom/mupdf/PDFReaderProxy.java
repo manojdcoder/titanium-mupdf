@@ -230,6 +230,14 @@ public class PDFReaderProxy extends TiViewProxy {
 			mSearchTask.go(key, direction, displayPage, searchPage);
 		}
 
+		public void enableHighlight(boolean flag) {
+			if (flag == true) {
+				PageView.HIGHLIGHT_COLOR = 0x802572AC;
+			} else {
+				PageView.HIGHLIGHT_COLOR = 0x00FFFFFF;
+			}
+		}
+
 		@Override
 		public void performPickFor(FilePicker picker) {
 
@@ -317,5 +325,10 @@ public class PDFReaderProxy extends TiViewProxy {
 	@Kroll.method
 	public void search(String key, int direction) {
 		getPDFReaderView().search(key, direction);
+	}
+
+	@Kroll.method
+	public void enableHighlight(boolean flag) {
+		getPDFReaderView().enableHighlight(flag);
 	}
 }

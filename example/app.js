@@ -48,32 +48,42 @@ pdfReader.addEventListener("click", function(evt) {
 	console.log("you just clicked on pdf reader");
 });
 
+var enabled = true;
 win.addEventListener("open", function(e) {
 	var activity = win.getActivity();
 	activity.onCreateOptionsMenu = function(e) {
-		var previousItem = e.menu.add({
-			title : "Previous",
+		/*var previousItem = e.menu.add({
+		 title : "Previous",
+		 showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+		 });
+		 previousItem.addEventListener("click", function(e) {
+		 pdfReader.moveToPrevious();
+		 });
+		 var nextItem = e.menu.add({
+		 title : "Next",
+		 showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+		 });
+		 nextItem.addEventListener("click", function(e) {
+		 pdfReader.moveToNext();
+		 });*/
+		var toggleHightLight = e.menu.add({
+			title : "Toggle highlight",
 			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
 		});
-		previousItem.addEventListener("click", function(e) {
-			pdfReader.moveToPrevious();
-		});
-		var nextItem = e.menu.add({
-			title : "Next",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		});
-		nextItem.addEventListener("click", function(e) {
-			pdfReader.moveToNext();
+		toggleHightLight.addEventListener("click", function(e) {
+			enabled = !enabled;
+			pdfReader.enableHighlight(enabled);
+			pdfReader.search("java", 0);
 		});
 		var searchPreviousItem = e.menu.add({
-			title : "Search Previous",
+			title : "Search P",
 			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
 		});
 		searchPreviousItem.addEventListener("click", function(e) {
 			pdfReader.search("java", -1);
 		});
 		var searchNextItem = e.menu.add({
-			title : "Search Next",
+			title : "Search N",
 			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
 		});
 		searchNextItem.addEventListener("click", function(e) {
