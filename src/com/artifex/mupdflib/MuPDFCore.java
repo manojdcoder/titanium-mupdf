@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import org.appcelerator.titanium.util.TiRHelper;
+import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
 
 public class MuPDFCore {
 	/* load our native library */
@@ -25,87 +26,81 @@ public class MuPDFCore {
 	private long globals;
 	private byte fileBuffer[];
 	private String file_format;
+	private boolean isUnencryptedPDF;
 
 	/* The native functions */
 	private native long openFile(String filename);
-
-	private native long openBuffer();
-
+	//private native long openBuffer();
+	private native long openBuffer(String magic);
 	private native String fileFormatInternal();
-
+	private native boolean isUnencryptedPDFInternal();
 	private native int countPagesInternal();
-
 	private native void gotoPageInternal(int localActionPageNum);
-
 	private native float getPageWidth();
-
 	private native float getPageHeight();
-
-	private native void drawPage(Bitmap bitmap, int pageW, int pageH, int patchX, int patchY, int patchW, int patchH);
-
-	private native void updatePageInternal(Bitmap bitmap, int page, int pageW, int pageH, int patchX, int patchY, int patchW, int patchH);
-
+	private native void drawPage(Bitmap bitmap, int pageW, int pageH, int patchX, int patchY, int patchW, int patchH, long cookiePtr);
+	private native void updatePageInternal(Bitmap bitmap, int page, int pageW, int pageH, int patchX, int patchY, int patchW, int patchH, long cookiePtr);
 	private native RectF[] searchPage(String text);
-
 	private native TextChar[][][][] text();
-
 	private native byte[] textAsHtml();
-
 	private native void addMarkupAnnotationInternal(PointF[] quadPoints, int type);
-
 	private native void addInkAnnotationInternal(PointF[][] arcs);
-
 	private native void deleteAnnotationInternal(int annot_index);
-
 	private native int passClickEventInternal(int page, float x, float y);
-
 	private native void setFocusedWidgetChoiceSelectedInternal(String[] selected);
-
 	private native String[] getFocusedWidgetChoiceSelected();
-
 	private native String[] getFocusedWidgetChoiceOptions();
-	
 	private native int getFocusedWidgetSignatureState();
-	
 	private native String checkFocusedSignatureInternal();
-
 	private native boolean signFocusedSignatureInternal(String keyFile, String password);
-
 	private native int setFocusedWidgetTextInternal(String text);
-
 	private native String getFocusedWidgetTextInternal();
-
 	private native int getFocusedWidgetTypeInternal();
-
 	private native LinkInfo[] getPageLinksInternal(int page);
-
 	private native RectF[] getWidgetAreasInternal(int page);
-
 	private native Annotation[] getAnnotationsInternal(int page);
-
 	private native OutlineItem[] getOutlineInternal();
-
 	private native boolean hasOutlineInternal();
-
 	private native boolean needsPasswordInternal();
-
 	private native boolean authenticatePasswordInternal(String password);
-
 	private native MuPDFAlertInternal waitForAlertInternal();
-
 	private native void replyToAlertInternal(MuPDFAlertInternal alert);
-
 	private native void startAlertsInternal();
-
 	private native void stopAlertsInternal();
-
 	private native void destroying();
-
 	private native boolean hasChangesInternal();
-
 	private native void saveInternal();
+	private native long createCookie();
+	private native void destroyCookie(long cookie);
+	private native void abortCookie(long cookie);
 
+	
 	public native boolean javascriptSupported();
+	
+	public class Cookie
+	{
+		private final long cookiePtr;
+
+		public Cookie()
+		{
+			cookiePtr = createCookie();
+			if (cookiePtr == 0)
+				throw new OutOfMemoryError();
+		}
+
+		public void abort()
+		{
+			abortCookie(cookiePtr);
+		}
+
+		public void destroy()
+		{
+			// We could do this in finalize, but there's no guarantee that
+			// a finalize will occur before the muPDF context occurs.
+			destroyCookie(cookiePtr);
+		}
+	}
+
 
 	public enum WidgetType {
 		NONE, TEXT, LISTBOX, COMBOBOX, SIGNATURE
@@ -115,9 +110,12 @@ public class MuPDFCore {
 		mFileName = filename;
 		globals = openFile(filename);
 		if (globals == 0) {
+			try {
 			throw new Exception(String.format(context.getString(TiRHelper.getResource("string.cannot_open_file_Path")), filename));
+			} catch( ResourceNotFoundException e ){}
 		}
 		file_format = fileFormatInternal();
+		isUnencryptedPDF = isUnencryptedPDFInternal();
 	}
 
 	public String getFileName() {
@@ -128,13 +126,20 @@ public class MuPDFCore {
 		return (new File(getFileName())).getParent();
 	}
 	
-	public MuPDFCore(Context context, byte buffer[]) throws Exception {
+	//public MuPDFCore(Context context, byte buffer[]) throws Exception {
+	public MuPDFCore(Context context, byte buffer[], String magic) throws Exception {
+
 		fileBuffer = buffer;
-		globals = openBuffer();
+		//globals = openBuffer();
+		globals = openBuffer(magic != null ? magic : "");
+
 		if (globals == 0) {
+			try {
 			throw new Exception(context.getString(TiRHelper.getResource("string.cannot_open_buffer")));
+			} catch( ResourceNotFoundException e ){}
 		}
 		file_format = fileFormatInternal();
+		isUnencryptedPDF = isUnencryptedPDFInternal();
 	}
 
 	public int countPages() {
@@ -152,6 +157,11 @@ public class MuPDFCore {
 
 	public String fileFormat() {
 		return file_format;
+	}
+	
+	public boolean isUnencryptedPDF()
+	{
+		return isUnencryptedPDF;
 	}
 
 	private synchronized int countPagesSynchronized() {
@@ -219,7 +229,7 @@ public class MuPDFCore {
 			int pageH, int patchX, int patchY, int patchW, int patchH) {
 		gotoPage(page);
 		///Log.d(TAG,"drawPageSynchrinized page:"+page);
-		drawPage(bitmap, pageW, pageH, patchX, patchY, patchW, patchH);
+		drawPage(bitmap, pageW, pageH, patchX, patchY, patchW, patchH, 0);
 	}
 	
 	public synchronized void drawSinglePage(int page, Bitmap bitmap, int pageW,
@@ -229,7 +239,7 @@ public class MuPDFCore {
 	}
 	
 	public synchronized void drawPage(Bitmap bm, int page, int pageW, int pageH,
-			int patchX, int patchY, int patchW, int patchH) {
+			int patchX, int patchY, int patchW, int patchH, MuPDFCore.Cookie cookie) {
 		///gotoPage(page);
 		///Bitmap bm = Bitmap.createBitmap(patchW, patchH, Config.ARGB_8888);
 		///drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH);
@@ -245,7 +255,7 @@ public class MuPDFCore {
 			///Log.d(TAG,"canvas: "+canvas);
 			if (displayPages == 1) {
 				gotoPage(page);
-				drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH);
+				drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 				//return bitmap;
 			} else {
 				final int drawPage = (page == 0) ? 0 : page * 2 - 1;
@@ -273,7 +283,7 @@ public class MuPDFCore {
 						gotoPage(drawPage);
 						drawPage(leftBm, leftPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, leftBmWidth, patchH);
+								patchY, leftBmWidth, patchH, cookie.cookiePtr);
 						Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
 						canvas.drawBitmap(leftBm, 0, 0, paint);
 						leftBm.recycle();
@@ -287,7 +297,7 @@ public class MuPDFCore {
 						gotoPage(drawPage);
 						drawPage(rightBm, rightPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, rightBmWidth, patchH);
+								patchY, rightBmWidth, patchH, cookie.cookiePtr);
 						Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
 						canvas.drawBitmap(rightBm, leftBmWidth, 0, paint);
 						rightBm.recycle();
@@ -302,7 +312,7 @@ public class MuPDFCore {
 								patchH, getBitmapConfig());
 						gotoPage(drawPage);
 						drawPage(leftBm, leftPageW, pageH, patchX, patchY,
-								leftBmWidth, patchH);
+								leftBmWidth, patchH, cookie.cookiePtr);
 						canvas.drawBitmap(leftBm, 0, 0, paint);
 						leftBm.recycle();
 					}
@@ -312,7 +322,7 @@ public class MuPDFCore {
 						gotoPage(drawPage+1);
 						drawPage(rightBm, rightPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, rightBmWidth, patchH);
+								patchY, rightBmWidth, patchH, cookie.cookiePtr);
 
 						canvas.drawBitmap(rightBm, (float) leftBmWidth, 0,
 								paint);
@@ -330,7 +340,7 @@ public class MuPDFCore {
 	}
 
 	public synchronized void updatePage(Bitmap bm, int page, int pageW,
-			int pageH, int patchX, int patchY, int patchW, int patchH) {
+			int pageH, int patchX, int patchY, int patchW, int patchH, MuPDFCore.Cookie cookie) {
 
 		Canvas canvas = null;
 		
@@ -340,7 +350,7 @@ public class MuPDFCore {
 			///Log.d(TAG,"canvas: "+canvas);
 			if (displayPages == 1) {
 				
-				updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH);
+				updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 				//return bitmap;
 			} else {
 				page = (page == 0) ? 0 : page * 2 - 1;
@@ -366,7 +376,7 @@ public class MuPDFCore {
 						Bitmap leftBm = Bitmap.createBitmap(bm, 0, 0, leftBmWidth, patchH);
 						updatePageInternal(leftBm, page, leftPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, leftBmWidth, patchH);
+								patchY, leftBmWidth, patchH, cookie.cookiePtr);
 						Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
 						canvas.drawBitmap(leftBm, 0, 0, paint);
 						leftBm.recycle();
@@ -379,7 +389,7 @@ public class MuPDFCore {
 						gotoPage(page);
 						updatePageInternal(rightBm, page, rightPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, rightBmWidth, patchH);
+								patchY, rightBmWidth, patchH, cookie.cookiePtr);
 						Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
 						canvas.drawBitmap(rightBm, leftBmWidth, 0, paint);
 						rightBm.recycle();
@@ -393,7 +403,7 @@ public class MuPDFCore {
 						Bitmap leftBm = Bitmap.createBitmap(bm, 0, 0, (leftBmWidth < bm.getWidth()) ? leftBmWidth : bm.getWidth(),
 								patchH);
 						updatePageInternal(leftBm, page, leftPageW, pageH, patchX, patchY,
-								leftBmWidth, patchH);
+								leftBmWidth, patchH, cookie.cookiePtr);
 						canvas.drawBitmap(leftBm, 0, 0, paint);
 						leftBm.recycle();
 					}
@@ -402,7 +412,7 @@ public class MuPDFCore {
 								patchH);
 						updatePageInternal(rightBm, page, rightPageW, pageH,
 								(leftBmWidth == 0) ? patchX - leftPageW : 0,
-								patchY, rightBmWidth, patchH);
+								patchY, rightBmWidth, patchH, cookie.cookiePtr);
 
 						canvas.drawBitmap(rightBm, (float) leftBmWidth, 0,
 								paint);
