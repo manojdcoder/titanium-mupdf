@@ -244,6 +244,15 @@ public class PDFReaderProxy extends TiViewProxy {
 	}
 
 	@Override
+	public void releaseViews()
+	{
+		// Release PDF Viewer Memory
+		Log.d("MUPDF", "RELEASING VIEW");
+		getPDFReaderView().mDocView.releaseViews();
+		super.releaseViews();
+	}
+	
+	@Override
 	public boolean handleMessage(Message msg) {
 		switch (msg.what) {
 		case MSG_SET_CURRENT_PAGE: {

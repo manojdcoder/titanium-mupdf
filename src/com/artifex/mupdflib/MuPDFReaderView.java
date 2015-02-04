@@ -220,6 +220,14 @@ public class MuPDFReaderView extends ReaderView {
 			mY = y;
 		}
 	}
+	
+	public void releaseViews() {
+		this.applyToChildren(new ReaderView.ViewMapper() {
+			void applyToView(View view) {
+				((MuPDFView)view).releaseBitmaps();
+			}
+		});
+	}
 
 	private void touch_up() {
 

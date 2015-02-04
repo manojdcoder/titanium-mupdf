@@ -2,8 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Users/marcelpociot/Downloads/android-sdk-macosx/platforms/android-19/android.jar"/>
-	<classpathentry kind="lib" path="/Users/marcelpociot/Downloads/android-sdk-macosx/add-ons/addon-google_apis-google-19/libs/maps.jar"/>
+	<classpathentry kind="lib" path="/Users/marcelpociot/Library/android-sdk-macosx/platforms/android-19/android.jar"/>
 	<classpathentry kind="lib" path="/Users/marcelpociot/Library/Application Support/Titanium/mobilesdk/osx/3.4.1.GA/android/titanium.jar"/>
 	<classpathentry kind="lib" path="/Users/marcelpociot/Library/Application Support/Titanium/mobilesdk/osx/3.4.1.GA/android/kroll-common.jar"/>
 	<classpathentry kind="lib" path="/Users/marcelpociot/Library/Application Support/Titanium/mobilesdk/osx/3.4.1.GA/android/kroll-apt.jar"/>
@@ -12,6 +11,6 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/marcelpociot/Downloads/android-sdk-macosx/extras/android/support/v7/appcompat/libs/android-support-v4.jar"/>
+	<classpathentry kind="lib" path="/Users/marcelpociot/Library/android-sdk-macosx/extras/android/support/v7/appcompat/libs/android-support-v4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
