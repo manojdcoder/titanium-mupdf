@@ -250,6 +250,8 @@ public abstract class PageView extends ViewGroup {
 	
 	public void releaseBitmaps() {
 		reinit();
+        mEntireBm.recycle();
+        mPatchBm.recycle();
 		mEntireBm = null;
 		mPatchBm = null;
 	}

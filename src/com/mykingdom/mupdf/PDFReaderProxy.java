@@ -146,6 +146,16 @@ public class PDFReaderProxy extends TiViewProxy {
 
 			super.processProperties(d);
 		}
+		
+		public void cleanup()
+		{
+			mDocView.releaseViews();
+			core.onDestroy();
+			core = null;
+			mSearchTask = null;
+			mDocView = null;
+			mSearchCallback = null;
+		}
 
 		private MuPDFCore openFile(String path) {
 			int lastSlashPos = path.lastIndexOf('/');
@@ -245,10 +255,11 @@ public class PDFReaderProxy extends TiViewProxy {
 
 	@Override
 	public void releaseViews()
-	{
+	{	
 		// Release PDF Viewer Memory
 		Log.d("MUPDF", "RELEASING VIEW");
-		getPDFReaderView().mDocView.releaseViews();
+		getPDFReaderView().cleanup();
+		
 		super.releaseViews();
 	}
 	
