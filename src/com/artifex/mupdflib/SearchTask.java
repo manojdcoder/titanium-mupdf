@@ -29,7 +29,6 @@ public abstract class SearchTask {
 
 	protected abstract void onTextFound(SearchTaskResult result);
 
-	protected abstract void onTextNotFound(int errorCode);
 
 	public void stop() {
 		if (mSearchTask != null) {
@@ -79,10 +78,7 @@ public abstract class SearchTask {
 			protected void onPostExecute(SearchTaskResult result) {
 				if (result != null) {
 					onTextFound(result);
-				} else {
-					onTextNotFound(SearchTaskResult.get() == null ? MupdfModule.ERROR_TEXT_NOT_FOUND
-							: MupdfModule.ERROR_NO_FURTHER_OCCURRENCES_FOUND);
-				}
+				} 
 			}
 
 			@Override

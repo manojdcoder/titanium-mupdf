@@ -16,24 +16,23 @@ import java.util.Iterator;
 
 import org.appcelerator.titanium.util.TiRHelper;
 import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
-
+/*
 class PatchInfo {
-	// public BitmapHolder bmh;
-	// public Bitmap bm;
+	//public BitmapHolder bmh;
+	//public Bitmap bm;
 	public Point patchViewSize;
 	public Rect patchArea;
 	public boolean completeRedraw;
 
-	public PatchInfo(Point aPatchViewSize, Rect aPatchArea,
-			boolean aCompleteRedraw) {
-		// bmh = aBmh;
-		// bm = null;
+	public PatchInfo(Point aPatchViewSize, Rect aPatchArea, boolean aCompleteRedraw) {
+		//bmh = aBmh;
+		//bm = null;
 		patchViewSize = aPatchViewSize;
 		patchArea = aPatchArea;
 		completeRedraw = aCompleteRedraw;
 	}
 }
-
+*/
 // Make our ImageViews opaque to optimize redraw
 class OpaqueImageView extends ImageView {
 
@@ -70,8 +69,7 @@ class TextSelector {
 
 		ArrayList<TextWord[]> lines = new ArrayList<TextWord[]>();
 		for (TextWord[] line : mText)
-			if (line[0].bottom > mSelectBox.top
-					&& line[0].top < mSelectBox.bottom)
+			if (line[0].bottom > mSelectBox.top && line[0].top < mSelectBox.bottom)
 				lines.add(line);
 
 		Iterator<TextWord[]> it = lines.iterator();
@@ -103,7 +101,7 @@ class TextSelector {
 }
 
 public abstract class PageView extends ViewGroup {
-	public static int HIGHLIGHT_COLOR = 0x802572AC;
+	private static final int HIGHLIGHT_COLOR = 0x802572AC;
 	private static final int LINK_COLOR = 0x20AC7225;
 	private static final int BOX_COLOR = 0xFF4444FF;
 	private static final int INK_COLOR = 0xFFFF0000;
@@ -117,21 +115,26 @@ public abstract class PageView extends ViewGroup {
 	protected float mSourceScale;
 
 	private ImageView mEntire; // Image rendered at minimum zoom
-	// private BitmapHolder mEntireBmh;
-	private Bitmap mEntireBm;
-	private Matrix mEntireMat;
+	//private BitmapHolder mEntireBmh;
+	private       Bitmap    mEntireBm;
+	private       Matrix    mEntireMat;
 	private AsyncTask<Void, Void, TextWord[][]> mGetText;
 	private AsyncTask<Void, Void, LinkInfo[]> mGetLinkInfo;
-	// private AsyncTask<Void, Void, Bitmap> mDrawEntire;
-	private AsyncTask<Void, Void, Void> mDrawEntire;
+	//private AsyncTask<Void, Void, Bitmap> mDrawEntire;
+	//private       AsyncTask<Void,Void,Void> mDrawEntire;
+	private       CancellableAsyncTask<Void, Void> mDrawEntire;
+
+
 
 	private Point mPatchViewSize; // View size on the basis of which the patch
 									// was created
 	private Rect mPatchArea;
 	private ImageView mPatch;
-	// private BitmapHolder mPatchBmh;
-	private Bitmap mPatchBm;
-	private AsyncTask<PatchInfo, Void, PatchInfo> mDrawPatch;
+	//private BitmapHolder mPatchBmh;
+	private       Bitmap    mPatchBm;
+	//private AsyncTask<PatchInfo, Void, PatchInfo> mDrawPatch;
+	private       CancellableAsyncTask<Void,Void> mDrawPatch;
+
 	private RectF mSearchBoxes[];
 	private RectF mSearchBoxesPrim[];
 	protected LinkInfo mLinks[];
@@ -146,38 +149,36 @@ public abstract class PageView extends ViewGroup {
 	private ProgressBar mBusyIndicator;
 	private final Handler mHandler = new Handler();
 
-	// public PageView(Context c, Point parentSize) {
+	//public PageView(Context c, Point parentSize) {
 	public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
 
 		super(c);
 		mContext = c;
 		mParentSize = parentSize;
 		setBackgroundColor(BACKGROUND_COLOR);
-		// mEntireBmh = new BitmapHolder();
-		// mPatchBmh = new BitmapHolder();
+		//mEntireBmh = new BitmapHolder();
+		//mPatchBmh = new BitmapHolder();
 		try {
-			mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y,
-					Config.ARGB_8888);
-		} catch (OutOfMemoryError e) {
+			mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
+		}
+		catch ( OutOfMemoryError e) {
 			Log.d("MY_OOM_ERROR", "error");
 		}
-
+		
 		mPatchBm = sharedHqBm;
 		mEntireMat = new Matrix();
 
 	}
 
-	// protected abstract Bitmap drawPage(int sizeX, int sizeY, int patchX,
-	// int patchY, int patchWidth, int patchHeight);
+	//protected abstract Bitmap drawPage(int sizeX, int sizeY, int patchX,
+	//		int patchY, int patchWidth, int patchHeight);
 
-	// protected abstract Bitmap updatePage(BitmapHolder h, int sizeX, int
-	// sizeY,
-	// int patchX, int patchY, int patchWidth, int patchHeight);
-	protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY,
-			int patchX, int patchY, int patchWidth, int patchHeight);
-
-	protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY,
-			int patchX, int patchY, int patchWidth, int patchHeight);
+	//protected abstract Bitmap updatePage(BitmapHolder h, int sizeX, int sizeY,
+	//		int patchX, int patchY, int patchWidth, int patchHeight);
+	//protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+	//protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+	protected abstract CancellableTaskDefinition<Void, Void> getDrawPageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+	protected abstract CancellableTaskDefinition<Void, Void> getUpdatePageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
 
 	protected abstract LinkInfo[] getLinkInfo();
 
@@ -188,12 +189,14 @@ public abstract class PageView extends ViewGroup {
 	private void reinit() {
 		// Cancel pending render task
 		if (mDrawEntire != null) {
-			mDrawEntire.cancel(true);
+			//mDrawEntire.cancel(true);
+			mDrawEntire.cancelAndWait();
 			mDrawEntire = null;
 		}
 
 		if (mDrawPatch != null) {
-			mDrawPatch.cancel(true);
+			//mDrawPatch.cancel(true);
+			mDrawPatch.cancelAndWait();
 			mDrawPatch = null;
 		}
 
@@ -215,13 +218,13 @@ public abstract class PageView extends ViewGroup {
 
 		if (mEntire != null) {
 			mEntire.setImageBitmap(null);
-			// mEntireBmh.setBm(null);
+			//mEntireBmh.setBm(null);
 			mEntire.invalidate();
 		}
 
 		if (mPatch != null) {
 			mPatch.setImageBitmap(null);
-			// mPatchBmh.setBm(null);
+			//mPatchBmh.setBm(null);
 			mPatch.invalidate();
 		}
 
@@ -244,9 +247,11 @@ public abstract class PageView extends ViewGroup {
 			mBusyIndicator = null;
 		}
 	}
-
+	
 	public void releaseBitmaps() {
 		reinit();
+        mEntireBm.recycle();
+        mPatchBm.recycle();
 		mEntireBm = null;
 		mPatchBm = null;
 	}
@@ -259,11 +264,11 @@ public abstract class PageView extends ViewGroup {
 			mBusyIndicator = new ProgressBar(mContext);
 			mBusyIndicator.setIndeterminate(true);
 			try {
-				mBusyIndicator.setBackgroundResource(TiRHelper
-						.getResource("drawable.busy"));
-			} catch (ResourceNotFoundException exp) {
-				Log.e("PageView", "XML resouce not found!");
+				mBusyIndicator.setBackgroundResource(TiRHelper.getResource("drawable.busy"));
+			} catch( ResourceNotFoundException e )
+			{
 			}
+			
 			addView(mBusyIndicator);
 		}
 		setBackgroundColor(BACKGROUND_COLOR);
@@ -272,7 +277,8 @@ public abstract class PageView extends ViewGroup {
 	public void setPage(int page, PointF size) {
 		// Cancel pending render task
 		if (mDrawEntire != null) {
-			mDrawEntire.cancel(true);
+			//mDrawEntire.cancel(true);
+			mDrawEntire.cancelAndWait();
 			mDrawEntire = null;
 		}
 
@@ -284,11 +290,11 @@ public abstract class PageView extends ViewGroup {
 		mPageNumber = page;
 		if (mEntire == null) {
 			mEntire = new OpaqueImageView(mContext);
-			// mEntire.setScaleType(ImageView.ScaleType.FIT_CENTER);
+			//mEntire.setScaleType(ImageView.ScaleType.FIT_CENTER);
 			mEntire.setScaleType(ImageView.ScaleType.MATRIX);
 			addView(mEntire);
 		}
-
+ 
 		// Calculate scaled size that fits within the screen limits
 		// This is the size at minimum zoom
 		mSourceScale = Math.min(mParentSize.x / size.x, mParentSize.y / size.y);
@@ -297,7 +303,7 @@ public abstract class PageView extends ViewGroup {
 		mSize = newSize;
 
 		mEntire.setImageBitmap(null);
-		// mEntireBmh.setBm(null);
+		//mEntireBmh.setBm(null);
 		mEntire.invalidate();
 
 		// Get the link info in the background
@@ -308,7 +314,7 @@ public abstract class PageView extends ViewGroup {
 
 			protected void onPostExecute(LinkInfo[] v) {
 				mLinks = v;
-				// invalidate();
+				//invalidate();
 				if (mSearchView != null)
 					mSearchView.invalidate();
 
@@ -318,27 +324,31 @@ public abstract class PageView extends ViewGroup {
 		mGetLinkInfo.execute();
 
 		// Render the page in the background
-		mDrawEntire = new AsyncTask<Void, Void, Void>() {
-			protected Void doInBackground(Void... v) {
-				drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-				return null;
-			}
-
-			protected void onPreExecute() {
+		//mDrawEntire = new AsyncTask<Void, Void, Void>() {
+		//	protected Void doInBackground(Void... v) {
+		//		drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
+		//		return null;
+		//	}
+		mDrawEntire = new CancellableAsyncTask<Void, Void>(getDrawPageTask(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y)) {
+			
+			//protected void onPreExecute() {
+			@Override
+			public void onPreExecute() {
 				setBackgroundColor(BACKGROUND_COLOR);
 				mEntire.setImageBitmap(null);
-				// mEntireBmh.setBm(null);
+				//mEntireBmh.setBm(null);
 				mEntire.invalidate();
 
 				if (mBusyIndicator == null) {
 					mBusyIndicator = new ProgressBar(mContext);
 					mBusyIndicator.setIndeterminate(true);
-					try {
-						mBusyIndicator.setBackgroundResource(TiRHelper
-								.getResource("drawable.busy"));
-					} catch (ResourceNotFoundException exp) {
-						Log.e("PageView", "XML resouce not found!");
+					try{
+						mBusyIndicator.setBackgroundResource(TiRHelper.getResource("drawable.busy"));
+					} catch ( ResourceNotFoundException e )
+					{
+						
 					}
+					
 					addView(mBusyIndicator);
 					mBusyIndicator.setVisibility(INVISIBLE);
 					mHandler.postDelayed(new Runnable() {
@@ -350,14 +360,16 @@ public abstract class PageView extends ViewGroup {
 				}
 			}
 
-			protected void onPostExecute(Void v) {
+			//protected void onPostExecute(Void v) {
+			@Override
+			public void onPostExecute(Void result) {
 				removeView(mBusyIndicator);
 				mBusyIndicator = null;
-				// mEntire.setImageBitmap(bm);
-				// mEntireBmh.setBm(bm);
+				//mEntire.setImageBitmap(bm);
+				//mEntireBmh.setBm(bm);
 				mEntire.setImageBitmap(mEntireBm);
 				mEntire.invalidate();
-				// invalidate();
+				//invalidate();
 				setBackgroundColor(Color.TRANSPARENT);
 			}
 		};
@@ -372,8 +384,7 @@ public abstract class PageView extends ViewGroup {
 					super.onDraw(canvas);
 					// Work out current total scale factor
 					// from source to view
-					final float scale = mSourceScale * (float) getWidth()
-							/ (float) mSize.x;
+					final float scale = mSourceScale * (float) getWidth() / (float) mSize.x;
 					final Paint paint = new Paint();
 
 					if (!mIsBlank && mSearchBoxes != null) {
@@ -387,32 +398,25 @@ public abstract class PageView extends ViewGroup {
 					if (!mIsBlank && mSearchBoxesPrim != null) {
 						paint.setColor(HIGHLIGHT_COLOR);
 						for (RectF rect : mSearchBoxesPrim)
-							canvas.drawRect(rect.left * scale + getWidth() / 2,
-									rect.top * scale, rect.right * scale
-											+ getWidth() / 2, rect.bottom
-											* scale, paint);
+							canvas.drawRect(rect.left * scale + getWidth() / 2, rect.top * scale, 
+									rect.right * scale + getWidth() / 2, rect.bottom * scale, paint);
 					}
-
+					
 					if (!mIsBlank && mLinks != null && mHighlightLinks) {
 						paint.setStrokeWidth(2);
-						for (LinkInfo link : mLinks) {
-							// canvas.drawRect(link.rect.left * scale,
-							// link.rect.top * scale,
-							// link.rect.right * scale, link.rect.bottom *
-							// scale, paint);
-							RectF rectfa = new RectF((link.rect.left - 2)
-									* scale, (link.rect.top - 2) * scale,
-									(link.rect.right + 2) * scale,
-									(link.rect.bottom + 2) * scale);
+						for (LinkInfo link : mLinks)
+						{
+							//canvas.drawRect(link.rect.left * scale, link.rect.top * scale, 
+							//		link.rect.right * scale, link.rect.bottom * scale, paint);
+							RectF rectfa = new RectF((link.rect.left - 2) * scale, (link.rect.top - 2) * scale, 
+									(link.rect.right + 2) * scale, (link.rect.bottom + 2) * scale);
 							paint.setStyle(Paint.Style.FILL);
 							paint.setColor(LINK_COLOR);
-							canvas.drawRoundRect(rectfa, 3 * scale, 3 * scale,
-									paint);
+							canvas.drawRoundRect(rectfa, 3 * scale, 3 * scale, paint);
 
 							paint.setStyle(Paint.Style.STROKE);
 							paint.setColor(HIGHLIGHT_COLOR);
-							canvas.drawRoundRect(rectfa, 3 * scale, 3 * scale,
-									paint);
+							canvas.drawRoundRect(rectfa, 3 * scale, 3 * scale, paint);
 						}
 					}
 
@@ -473,16 +477,14 @@ public abstract class PageView extends ViewGroup {
 									p = iit.next();
 									float x = p.x * scale;
 									float y = p.y * scale;
-									path.quadTo(mX, mY, (x + mX) / 2,
-											(y + mY) / 2);
+									path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
 									mX = x;
 									mY = y;
 								}
 								path.lineTo(mX, mY);
 							} else {
 								p = arc.get(0);
-								canvas.drawCircle(p.x * scale, p.y * scale,
-										INK_THICKNESS * scale / 2, paint);
+								canvas.drawCircle(p.x * scale, p.y * scale, INK_THICKNESS * scale / 2, paint);
 							}
 						}
 
@@ -508,7 +510,7 @@ public abstract class PageView extends ViewGroup {
 		if (mSearchView != null)
 			mSearchView.invalidate();
 	}
-
+	
 	public void setLinkHighlighting(boolean f) {
 		mHighlightLinks = f;
 		if (mSearchView != null)
@@ -640,11 +642,11 @@ public abstract class PageView extends ViewGroup {
 		int h = bottom - top;
 
 		if (mEntire != null) {
-			// mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
-			// mEntire.setImageMatrix(mEntireMat);
-			// mEntire.invalidate();
+			//mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
+			//mEntire.setImageMatrix(mEntireMat);
+			//mEntire.invalidate();
 			if (mEntire.getWidth() != w || mEntire.getHeight() != h) {
-				mEntireMat.setScale(w / (float) mSize.x, h / (float) mSize.y);
+				mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
 				mEntire.setImageMatrix(mEntireMat);
 				mEntire.invalidate();
 			}
@@ -662,7 +664,7 @@ public abstract class PageView extends ViewGroup {
 				mPatchArea = null;
 				if (mPatch != null) {
 					mPatch.setImageBitmap(null);
-					// mPatchBmh.setBm(null);
+					//mPatchBmh.setBm(null);
 					mPatch.invalidate();
 				}
 			} else {
@@ -685,15 +687,16 @@ public abstract class PageView extends ViewGroup {
 		// If the viewArea's size matches the unzoomed size, there is no need
 		// for an hq patch
 		if (viewArea.width() == mSize.x || viewArea.height() == mSize.y) {
-			// If the viewArea's size matches the unzoomed size, there is no
-			// need for an hq patch
+			// If the viewArea's size matches the unzoomed size, there is no need for an hq patch
 			if (mPatch != null) {
 				mPatch.setImageBitmap(null);
 				mPatch.invalidate();
 			}
 		} else {
-			Point patchViewSize = new Point(viewArea.width(), viewArea.height());
-			Rect patchArea = new Rect(0, 0, mParentSize.x, mParentSize.y);
+			//Point patchViewSize = new Point(viewArea.width(), viewArea.height());
+			//Rect patchArea = new Rect(0, 0, mParentSize.x, mParentSize.y);
+			final Point patchViewSize = new Point(viewArea.width(), viewArea.height());
+			final Rect patchArea = new Rect(0, 0, mParentSize.x, mParentSize.y);
 
 			// Intersect and test that there is an intersection
 			if (!patchArea.intersect(viewArea))
@@ -714,39 +717,51 @@ public abstract class PageView extends ViewGroup {
 
 			// Stop the drawing of previous patch if still going
 			if (mDrawPatch != null) {
-				mDrawPatch.cancel(true);
+				//mDrawPatch.cancel(true);
+				mDrawPatch.cancelAndWait();
 				mDrawPatch = null;
 			}
 
-			// if (completeRedraw) {
-			// The bitmap holder mPatchBm may still be rendered to by a
-			// previously invoked task, and possibly for a different
-			// area, so we cannot risk the bitmap generated by this task
-			// being passed to it
-			// mPatchBmh.drop();
-			// mPatchBmh = new BitmapHolder();
-			// }
+			//if (completeRedraw) {
+				// The bitmap holder mPatchBm may still be rendered to by a
+				// previously invoked task, and possibly for a different
+				// area, so we cannot risk the bitmap generated by this task
+				// being passed to it
+			//	mPatchBmh.drop();
+			//	mPatchBmh = new BitmapHolder();
+			//}
 
 			// Create and add the image view if not already done
 			if (mPatch == null) {
 				mPatch = new OpaqueImageView(mContext);
-				// mPatch.setScaleType(ImageView.ScaleType.FIT_CENTER);
+				//mPatch.setScaleType(ImageView.ScaleType.FIT_CENTER);
 				mPatch.setScaleType(ImageView.ScaleType.MATRIX);
 				addView(mPatch);
-				if (mSearchView != null)
+				if (mSearchView != null) 
 					mSearchView.bringToFront();
 			}
+			CancellableTaskDefinition<Void, Void> task;
+			if (completeRedraw)
+				task = getDrawPageTask(mPatchBm, patchViewSize.x, patchViewSize.y,
+								patchArea.left, patchArea.top,
+								patchArea.width(), patchArea.height());
+			else
+				task = getUpdatePageTask(mPatchBm, patchViewSize.x, patchViewSize.y,
+						patchArea.left, patchArea.top,
+						patchArea.width(), patchArea.height());
 
+			mDrawPatch = new CancellableAsyncTask<Void,Void>(task) {
+			/*
 			mDrawPatch = new AsyncTask<PatchInfo, Void, PatchInfo>() {
 				protected PatchInfo doInBackground(PatchInfo... v) {
 					if (v[0].completeRedraw) {
-						// v[0].bm = drawPage(v[0].patchViewSize.x,
+						//v[0].bm = drawPage(v[0].patchViewSize.x,
 						drawPage(mPatchBm, v[0].patchViewSize.x,
 								v[0].patchViewSize.y, v[0].patchArea.left,
 								v[0].patchArea.top, v[0].patchArea.width(),
 								v[0].patchArea.height());
 					} else {
-						// v[0].bm = updatePage(v[0].bmh, v[0].patchViewSize.x,
+						//v[0].bm = updatePage(v[0].bmh, v[0].patchViewSize.x,
 						updatePage(mPatchBm, v[0].patchViewSize.x,
 								v[0].patchViewSize.y, v[0].patchArea.left,
 								v[0].patchArea.top, v[0].patchArea.width(),
@@ -755,41 +770,43 @@ public abstract class PageView extends ViewGroup {
 
 					return v[0];
 				}
+			*/
+				public void onPostExecute(Void result) {
+					mPatchViewSize = patchViewSize;
+					mPatchArea     = patchArea;
 
-				protected void onPostExecute(PatchInfo v) {
-					// if (mPatchBmh == v.bmh) {
-					// mPatchViewSize = v.patchViewSize;
-					// mPatchArea = v.patchArea;
-					// if (v.bm != null) {
-					// mPatch.setImageBitmap(v.bm);
-					// v.bmh.setBm(v.bm);
-					// v.bm = null;
-					// }
-					// requestLayout();
-					// Calling requestLayout here doesn't lead to a later
-					// call to layout. No idea
-					// why, but apparently others have run into the problem.
-					// mPatch.layout(mPatchArea.left, mPatchArea.top,
-					// mPatchArea.right, mPatchArea.bottom);
-					// invalidate();
-					mPatchViewSize = v.patchViewSize;
-					mPatchArea = v.patchArea;
+				//protected void onPostExecute(PatchInfo v) {
+					//if (mPatchBmh == v.bmh) {
+					//	mPatchViewSize = v.patchViewSize;
+					//	mPatchArea = v.patchArea;
+					//	if (v.bm != null) {
+					//		mPatch.setImageBitmap(v.bm);
+					//		v.bmh.setBm(v.bm);
+					//		v.bm = null;
+					//	}
+						// requestLayout();
+						// Calling requestLayout here doesn't lead to a later
+						// call to layout. No idea
+						// why, but apparently others have run into the problem.
+					//	mPatch.layout(mPatchArea.left, mPatchArea.top,
+					//			mPatchArea.right, mPatchArea.bottom);
+					//	invalidate();
+					//mPatchViewSize = v.patchViewSize;
+					//mPatchArea     = v.patchArea;
 					mPatch.setImageBitmap(mPatchBm);
 					mPatch.invalidate();
-					// requestLayout();
-					// Calling requestLayout here doesn't lead to a later call
-					// to layout. No idea
+					//requestLayout();
+					// Calling requestLayout here doesn't lead to a later call to layout. No idea
 					// why, but apparently others have run into the problem.
-					mPatch.layout(mPatchArea.left, mPatchArea.top,
-							mPatchArea.right, mPatchArea.bottom);
-					// invalidate();
+					mPatch.layout(mPatchArea.left, mPatchArea.top, mPatchArea.right, mPatchArea.bottom);
+					//invalidate();
 				}
 			};
 
-			// mDrawPatch.execute(new PatchInfo(patchViewSize, patchArea,
-			// mPatchBmh, completeRedraw));
-			mDrawPatch.execute(new PatchInfo(patchViewSize, patchArea,
-					completeRedraw));
+			//mDrawPatch.execute(new PatchInfo(patchViewSize, patchArea, mPatchBmh, completeRedraw));
+			//mDrawPatch.execute(new PatchInfo(patchViewSize, patchArea, completeRedraw));
+			mDrawPatch.execute();
+
 
 		}
 	}
@@ -797,34 +814,38 @@ public abstract class PageView extends ViewGroup {
 	public void update() {
 		// Cancel pending render task
 		if (mDrawEntire != null) {
-			mDrawEntire.cancel(true);
+			//mDrawEntire.cancel(true);
+			mDrawEntire.cancelAndWait();
 			mDrawEntire = null;
 		}
 
 		if (mDrawPatch != null) {
-			mDrawPatch.cancel(true);
+			//mDrawPatch.cancel(true);
+			mDrawPatch.cancelAndWait();
 			mDrawPatch = null;
 		}
 
 		// Render the page in the background
-		mDrawEntire = new AsyncTask<Void, Void, Void>() {
-			protected Void doInBackground(Void... v) {
+		mDrawEntire = new CancellableAsyncTask<Void, Void>(getUpdatePageTask(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y)) {
+		//mDrawEntire = new AsyncTask<Void, Void, Void>() {
+		//	protected Void doInBackground(Void... v) {
 				// Pass the current bitmap as a basis for the update, but use a
 				// bitmap
 				// holder so that the held bitmap will be nulled and not hold on
 				// to
 				// memory, should this view become redundant.
-				updatePage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-				return null;
-			}
+		//		updatePage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
+		//		return null;
+		//	}
 
-			// protected void onPostExecute(Bitmap bm) {
-			// if (bm != null) {
-			// mEntire.setImageBitmap(bm);
-			// mEntireBmh.setBm(bm);
-			// }
-			// invalidate();
-			protected void onPostExecute(Void v) {
+			//protected void onPostExecute(Bitmap bm) {
+			//	if (bm != null) {
+			//		mEntire.setImageBitmap(bm);
+			//		mEntireBmh.setBm(bm);
+			//	}
+			//	invalidate();
+			//protected void onPostExecute(Void v) {
+			public void onPostExecute(Void result) {
 				mEntire.setImageBitmap(mEntireBm);
 				mEntire.invalidate();
 
@@ -839,7 +860,8 @@ public abstract class PageView extends ViewGroup {
 	public void removeHq() {
 		// Stop the drawing of the patch if still going
 		if (mDrawPatch != null) {
-			mDrawPatch.cancel(true);
+			//mDrawPatch.cancel(true);
+			mDrawPatch.cancelAndWait();
 			mDrawPatch = null;
 		}
 
@@ -848,7 +870,7 @@ public abstract class PageView extends ViewGroup {
 		mPatchArea = null;
 		if (mPatch != null) {
 			mPatch.setImageBitmap(null);
-			// mPatchBmh.setBm(null);
+			//mPatchBmh.setBm(null);
 			mPatch.invalidate();
 		}
 	}

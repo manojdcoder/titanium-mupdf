@@ -146,6 +146,16 @@ public class PDFReaderProxy extends TiViewProxy {
 
 			super.processProperties(d);
 		}
+		
+		public void cleanup()
+		{
+			mDocView.releaseViews();
+			core.onDestroy();
+			core = null;
+			mSearchTask = null;
+			mDocView = null;
+			mSearchCallback = null;
+		}
 
 		private MuPDFCore openFile(String path) {
 			int lastSlashPos = path.lastIndexOf('/');
@@ -171,16 +181,6 @@ public class PDFReaderProxy extends TiViewProxy {
 						}
 					}
 
-					@Override
-					protected void onTextNotFound(int errorCode) {
-						if (mSearchCallback != null) {
-							HashMap<String, Object> params = new HashMap<String, Object>();
-							params.put("error", true);
-							params.put("success", false);
-							params.put("code", errorCode);
-							mSearchCallback.call(getKrollObject(), params);
-						}
-					}
 				};
 				// New file: drop the old outline data
 				// OutlineActivityData.set(null);
@@ -229,15 +229,6 @@ public class PDFReaderProxy extends TiViewProxy {
 			int searchPage = r != null ? r.pageNumber : -1;
 			mSearchTask.go(key, direction, displayPage, searchPage);
 		}
-
-		public void enableHighlight(boolean flag) {
-			if (flag == true) {
-				PageView.HIGHLIGHT_COLOR = 0x802572AC;
-			} else {
-				PageView.HIGHLIGHT_COLOR = 0x00FFFFFF;
-			}
-		}
-
 		@Override
 		public void performPickFor(FilePicker picker) {
 
@@ -262,6 +253,16 @@ public class PDFReaderProxy extends TiViewProxy {
 		return (PDFReaderView) getOrCreateView();
 	}
 
+	@Override
+	public void releaseViews()
+	{	
+		// Release PDF Viewer Memory
+		Log.d("MUPDF", "RELEASING VIEW");
+		getPDFReaderView().cleanup();
+		
+		super.releaseViews();
+	}
+	
 	@Override
 	public boolean handleMessage(Message msg) {
 		switch (msg.what) {
@@ -325,10 +326,5 @@ public class PDFReaderProxy extends TiViewProxy {
 	@Kroll.method
 	public void search(String key, int direction) {
 		getPDFReaderView().search(key, direction);
-	}
-
-	@Kroll.method
-	public void enableHighlight(boolean flag) {
-		getPDFReaderView().enableHighlight(flag);
 	}
 }
