@@ -154,9 +154,9 @@ win.open();
 ## Changelog
 
 * v1.4
-  Method 
+  ###Method 
   	* setHighlightColor
-  Events
+  ###Events
     * click
     * change
   
