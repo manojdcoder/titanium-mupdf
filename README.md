@@ -154,11 +154,8 @@ win.open();
 ## Changelog
 
 * v1.4
-  ### Method 
-  	* setHighlightColor
-  ### Events
-    * click
-    * change
+	* added methods setHighlightColor
+	* added events click and change
   
 * v1.1
-  * added x86 support
+  	* added x86 support
