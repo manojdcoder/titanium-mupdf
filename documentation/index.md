@@ -1,81 +1,39 @@
+# mupdf Module
+
+## Description
+
+TODO: Enter your module description here
+
+## Accessing the mupdf Module
+
+To access this module from JavaScript, you would do the following:
+
+    var mupdf = require("com.mykingdom.mupdf");
+
+The mupdf variable is a reference to the Module object.
+
+## Reference
+
+TODO: If your module has an API, you should document
+the reference here.
+
+### mupdf.function
+
+TODO: This is an example of a module function.
+
+### mupdf.property
+
+TODO: This is an example of a module property.
+
 ## Usage
 
-```javascript
-var win = Ti.UI.createWindow({
-	backgroundColor : 'white',
-	exitOnClose : true
-});
+TODO: Enter your usage example here
 
-var READER_MODULE = require("com.mykingdom.mupdf");
+## Author
 
-//Make sure the file exists
-var file = Ti.Filesystem.getFile(Ti.Filesystem.externalStorageDirectory, "sample.pdf");
+TODO: Enter your author name, email and other contact
+details you want to share here.
 
-if (!file.exists()) {
-	var source = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, "sample.pdf");
-	file.write(source.read());
-}
+## License
 
-console.log(">>EXISTS>>>" + file.exists());
-
-var pdfReader = READER_MODULE.createPDFReader({
-	file : file
-});
-
-//pdfReader.loadPDFFromFile(file);
-
-win.add(pdfReader);
-
-/*
- *
- * Available methods:
- * ------------------
- * pdfReader.getCurrentPage() - returns current page
- * pdfReader.setCurrentPage(pageNum) - set current page
- * pdfReader.getPageCount() - returns total number of pages
- *
- */
-
-pdfReader.addEventListener("pagechanged", function(evt) {
-	/*
-	 *
-	 * properties of evt
-	 * currentPage - being viewed
-	 * pageCount - number of pages in pdf
-	 *
-	 */
-	console.log("Viewing " + evt.currentPage + " / " + evt.pageCount);
-});
-
-pdfReader.addEventListener("click", function(evt) {
-	console.log("you just clicked on pdf reader");
-});
-
-win.addEventListener("open", function(e) {
-	var activity = win.getActivity();
-	activity.onCreateOptionsMenu = function(e) {
-		var previousItem = e.menu.add({
-			title : "Previous",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		});
-		previousItem.addEventListener("click", function(e) {
-			pdfReader.moveToPrevious();
-		});
-		var nextItem = e.menu.add({
-			title : "Next",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		});
-		nextItem.addEventListener("click", function(e) {
-			pdfReader.moveToNext();
-		});
-	};
-	activity.invalidateOptionsMenu();
-});
-
-Ti.Gesture.addEventListener("orientationchange", function(){
-	pdfReader.setCurrentPage(pdfReader.getCurrentPage());
-});
-
-win.open();
-
-```
+TODO: Enter your license/legal information here.

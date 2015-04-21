@@ -1,3 +1,6 @@
+var enabled = true;
+var count = 0;
+
 var win = Ti.UI.createWindow({
 	backgroundColor : 'white',
 	exitOnClose : true
@@ -33,78 +36,103 @@ win.add(pdfReader);
  *
  */
 
-pdfReader.addEventListener("pagechanged", function(evt) {
+pdfReader.addEventListener("change", function(evt) {
 	/*
 	 *
 	 * properties of evt
 	 * currentPage - being viewed
-	 * pageCount - number of pages in pdf
+	 * count - number of pages in pdf
 	 *
 	 */
-	console.log("Viewing " + evt.currentPage + " / " + evt.pageCount);
+	console.log("Viewing " + evt.currentPage + " / " + evt.count);
 });
 
 pdfReader.addEventListener("click", function(evt) {
 	console.log("you just clicked on pdf reader");
 });
 
-var enabled = true;
 win.addEventListener("open", function(e) {
 	var activity = win.getActivity();
 	activity.onCreateOptionsMenu = function(e) {
-		/*var previousItem = e.menu.add({
-		 title : "Previous",
-		 showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		 });
-		 previousItem.addEventListener("click", function(e) {
-		 pdfReader.moveToPrevious();
-		 });
-		 var nextItem = e.menu.add({
-		 title : "Next",
-		 showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		 });
-		 nextItem.addEventListener("click", function(e) {
-		 pdfReader.moveToNext();
-		 });*/
+		var searchItem = e.menu.add({
+			title : "Search",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+		});
+		searchItem.addEventListener("click", function(e) {
+			var toast = Ti.UI.createNotification({
+				message : "Search for the keyword 'for' in the entire pdf",
+				duration : Ti.UI.NOTIFICATION_DURATION_LONG
+			});
+			toast.show();
+			count = 0;
+			pdfReader.onSearch(searchResult);
+			pdfReader.search("for", 0);
+		});
+		var previousItem = e.menu.add({
+			title : "Previous",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
+		});
+		previousItem.addEventListener("click", function(e) {
+			pdfReader.moveToPrevious();
+		});
+		var nextItem = e.menu.add({
+			title : "Next",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
+		});
+		nextItem.addEventListener("click", function(e) {
+			pdfReader.moveToNext();
+		});
+		var searchPreviousItem = e.menu.add({
+			title : "Search Previous",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
+		});
+		searchPreviousItem.addEventListener("click", function(e) {
+			pdfReader.onSearch(logSearch);
+			pdfReader.search("for", -1);
+		});
+		var searchNextItem = e.menu.add({
+			title : "Search Next",
+			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
+		});
+		searchNextItem.addEventListener("click", function(e) {
+			pdfReader.onSearch(logSearch);
+			pdfReader.search("for", 1);
+		});
 		var toggleHightLight = e.menu.add({
 			title : "Toggle highlight",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
+			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
 		});
 		toggleHightLight.addEventListener("click", function(e) {
 			enabled = !enabled;
-			pdfReader.enableHighlight(enabled);
-			pdfReader.search("java", 0);
-		});
-		var searchPreviousItem = e.menu.add({
-			title : "Search P",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		});
-		searchPreviousItem.addEventListener("click", function(e) {
-			pdfReader.search("java", -1);
-		});
-		var searchNextItem = e.menu.add({
-			title : "Search N",
-			showAsAction : Ti.Android.SHOW_AS_ACTION_ALWAYS
-		});
-		searchNextItem.addEventListener("click", function(e) {
-			pdfReader.search("java", 1);
+			pdfReader.setHighlightColor( enabled ? "#0000FF" : "transparent");
+			pdfReader.onSearch(logSearch);
+			pdfReader.search("for", 0);
 		});
 	};
 	activity.invalidateOptionsMenu();
 });
 
-pdfReader.onSearch(searchResult);
-
 function searchResult(result) {
-	console.log(pdfReader.ERROR_NO_FURTHER_OCCURRENCES_FOUND);
-	if (result.error) {
+	console.log(result);
+	if (count == 0 && result.error) {
 		if (result.code == READER_MODULE.ERROR_TEXT_NOT_FOUND) {
 			alert("No matches found");
 		} else if (result.code == READER_MODULE.ERROR_NO_FURTHER_OCCURRENCES_FOUND) {
 			alert("No more occurrences on the given direction");
 		}
+		return;
 	}
-	console.log(result);
+	count += result.count;
+	if (result.success && result.currentPage < pdfReader.getPageCount()) {
+		pdfReader.search("for", 1);
+	} else {
+		pdfReader.setCurrentPage(1);
+		alert("Total occurence : " + count);
+	}
+}
+
+function logSearch(evt) {
+	console.log(evt);
 }
 
 Ti.Gesture.addEventListener("orientationchange", function() {
