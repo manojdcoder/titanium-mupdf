@@ -1,4 +1,4 @@
-# mupdf Module
+# MuPDF Module
 
 ## Description
 
