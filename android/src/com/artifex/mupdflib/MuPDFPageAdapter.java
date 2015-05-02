@@ -17,7 +17,6 @@ public class MuPDFPageAdapter extends BaseAdapter {
 	private       Bitmap mSharedHqBm;
 
 	public MuPDFPageAdapter(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core) {
-
 		mContext = c;
 		mFilePickerSupport = filePickerSupport;
 		mCore = core;
@@ -55,7 +54,7 @@ public class MuPDFPageAdapter extends BaseAdapter {
 			// Page size as yet unknown. Blank it for now, and
 			// start a background task to find the size
 			pageView.blank(position);
-			AsyncTask<Void, Void, PointF> sizingTask = new AsyncTask<Void, Void, PointF>() {
+			AsyncTask<Void,Void,PointF> sizingTask = new AsyncTask<Void,Void,PointF>() {
 				@Override
 				protected PointF doInBackground(Void... arg0) {
 					return mCore.getPageSize(position);
@@ -73,7 +72,7 @@ public class MuPDFPageAdapter extends BaseAdapter {
 				}
 			};
 
-			sizingTask.execute((Void) null);
+			sizingTask.execute((Void)null);
 		}
 		return pageView;
 	}

@@ -1,5 +1,11 @@
 package com.artifex.mupdflib;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
+import org.appcelerator.titanium.util.TiRHelper;
+import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
@@ -10,12 +16,6 @@ import android.util.Log;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-
-import org.appcelerator.titanium.util.TiRHelper;
-import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
 
 public class PrintDialogActivity extends Activity {
 	private static final String PRINT_DIALOG_URL = "https://www.google.com/cloudprint/dialog.html";
@@ -52,19 +52,22 @@ public class PrintDialogActivity extends Activity {
 			setContentView(TiRHelper.getResource("layout.print_dialog"));
 			dialogWebView = (WebView) findViewById(TiRHelper
 					.getResource("id.webview"));
+
+			dialogWebView = (WebView) findViewById(TiRHelper
+					.getResource("id.webview"));
+			cloudPrintIntent = this.getIntent();
+
+			WebSettings settings = dialogWebView.getSettings();
+			settings.setJavaScriptEnabled(true);
+
+			dialogWebView.setWebViewClient(new PrintDialogWebClient());
+			dialogWebView.addJavascriptInterface(
+					new PrintDialogJavaScriptInterface(), JS_INTERFACE);
+
+			dialogWebView.loadUrl(PRINT_DIALOG_URL);
 		} catch (ResourceNotFoundException exp) {
 			Log.e("PrintDialogAlert", "XML resouce not found!");
 		}
-		cloudPrintIntent = this.getIntent();
-
-		WebSettings settings = dialogWebView.getSettings();
-		settings.setJavaScriptEnabled(true);
-
-		dialogWebView.setWebViewClient(new PrintDialogWebClient());
-		dialogWebView.addJavascriptInterface(
-				new PrintDialogJavaScriptInterface(), JS_INTERFACE);
-
-		dialogWebView.loadUrl(PRINT_DIALOG_URL);
 	}
 
 	@Override

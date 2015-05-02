@@ -1,5 +1,6 @@
 package com.artifex.mupdflib;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -11,12 +12,12 @@ import android.view.View;
 import android.view.WindowManager;
 
 public class MuPDFReaderView extends ReaderView {
-	enum Mode {
+	public enum Mode {
 		Viewing, Selecting, Drawing
 	}
 
 	private final Context mContext;
-	private boolean mLinksHighlighted = false;
+	private boolean mLinksEnabled = false;
 	private Mode mMode = Mode.Viewing;
 	private boolean tapDisabled = false;
 	private int tapPageMargin;
@@ -30,21 +31,16 @@ public class MuPDFReaderView extends ReaderView {
 	protected void onHit(Hit item) {
 	};
 
-	public void setLinksHighlighted(boolean b) {
-		mLinksHighlighted = b;
+	public void setLinksEnabled(boolean b) {
+		mLinksEnabled = b;
 		resetupChildren();
 	}
 
 	public void setMode(Mode m) {
 		mMode = m;
 	}
-	
-	private void setup() {
 
-	//public MuPDFReaderView(Activity act) {
-		//super(act);
-		//mContext = act;
-		
+	private void setup() {
 		// Get the screen size etc to customise tap margins.
 		// We calculate the size of 1 inch of the screen for tapping.
 		// On some devices the dpi values returned are wrong, so we
@@ -53,25 +49,23 @@ public class MuPDFReaderView extends ReaderView {
 		// dimension I've seen is 480 pixels or so). Then we check
 		// to ensure we are never more than 1/5 of the screen width.
 		DisplayMetrics dm = new DisplayMetrics();
-		//act.getWindowManager().getDefaultDisplay().getMetrics(dm);
-		WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+		WindowManager wm = (WindowManager) mContext
+				.getSystemService(Context.WINDOW_SERVICE);
 		wm.getDefaultDisplay().getMetrics(dm);
-
 		tapPageMargin = (int) dm.xdpi;
-		if (tapPageMargin < 80)
-			tapPageMargin = 80;
-		if (tapPageMargin > dm.widthPixels / 6)
-			tapPageMargin = dm.widthPixels / 6;
+		if (tapPageMargin < 100)
+			tapPageMargin = 100;
+		if (tapPageMargin > dm.widthPixels / 5)
+			tapPageMargin = dm.widthPixels / 5;
 	}
-	
+
 	public MuPDFReaderView(Context context) {
 		super(context);
 		mContext = context;
 		setup();
 	}
 
-	public MuPDFReaderView(Context context, AttributeSet attrs)
-	{
+	public MuPDFReaderView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		mContext = context;
 		setup();
@@ -85,18 +79,20 @@ public class MuPDFReaderView extends ReaderView {
 			Hit item = pageView.passClickEvent(e.getX(), e.getY());
 			onHit(item);
 			if (item == Hit.Nothing) {
-				if (/*mLinksEnabled && */pageView != null && (link = pageView.hitLink(e.getX(), e.getY())) != null) {
+				if (mLinksEnabled
+						&& pageView != null
+						&& (link = pageView.hitLink(e.getX(), e.getY())) != null) {
 					link.acceptVisitor(new LinkInfoVisitor() {
 						@Override
 						public void visitInternal(LinkInfoInternal li) {
 							// Clicked on an internal (GoTo) link
-							//TODO: goto page in landscape mode
 							setDisplayedViewIndex(li.pageNumber);
 						}
 
 						@Override
 						public void visitExternal(LinkInfoExternal li) {
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(li.url));
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+									.parse(li.url));
 							mContext.startActivity(intent);
 						}
 
@@ -109,10 +105,10 @@ public class MuPDFReaderView extends ReaderView {
 					super.smartMoveBackwards();
 				} else if (e.getX() > super.getWidth() - tapPageMargin) {
 					super.smartMoveForwards();
-				//} else if (e.getY() < tapPageMargin) {
-				//	super.smartMoveBackwards();
-				//} else if (e.getY() > super.getHeight() - tapPageMargin) {
-				//	super.smartMoveForwards();
+				} else if (e.getY() < tapPageMargin) {
+					super.smartMoveBackwards();
+				} else if (e.getY() > super.getHeight() - tapPageMargin) {
+					super.smartMoveForwards();
 				} else {
 					onTapMainDocArea();
 				}
@@ -123,11 +119,12 @@ public class MuPDFReaderView extends ReaderView {
 
 	@Override
 	public boolean onDown(MotionEvent e) {
-		
+
 		return super.onDown(e);
 	}
 
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+			float distanceY) {
 		MuPDFView pageView = (MuPDFView) getDisplayedView();
 		switch (mMode) {
 		case Viewing:
@@ -145,7 +142,8 @@ public class MuPDFReaderView extends ReaderView {
 	}
 
 	@Override
-	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+			float velocityY) {
 		switch (mMode) {
 		case Viewing:
 			return super.onFling(e1, e2, velocityX, velocityY);
@@ -164,41 +162,37 @@ public class MuPDFReaderView extends ReaderView {
 
 	public boolean onTouchEvent(MotionEvent event) {
 
-		if ( mMode == Mode.Drawing )
-		{
+		if (mMode == Mode.Drawing) {
 			float x = event.getX();
 			float y = event.getY();
-			switch (event.getAction())
-			{
-				case MotionEvent.ACTION_DOWN:
-					touch_start(x, y);
-					break;
-				case MotionEvent.ACTION_MOVE:
-					touch_move(x, y);
-					break;
-				case MotionEvent.ACTION_UP:
-					touch_up();
-					break;
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+				touch_start(x, y);
+				break;
+			case MotionEvent.ACTION_MOVE:
+				touch_move(x, y);
+				break;
+			case MotionEvent.ACTION_UP:
+				touch_up();
+				break;
 			}
 		}
 
-		if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
-		{
+		if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN) {
 			tapDisabled = false;
 		}
-			
+
 		return super.onTouchEvent(event);
 	}
-	
+
 	private float mX, mY;
 
 	private static final float TOUCH_TOLERANCE = 2;
 
 	private void touch_start(float x, float y) {
 
-		MuPDFView pageView = (MuPDFView)getDisplayedView();
-		if (pageView != null)
-		{
+		MuPDFView pageView = (MuPDFView) getDisplayedView();
+		if (pageView != null) {
 			pageView.startDraw(x, y);
 		}
 		mX = x;
@@ -209,22 +203,20 @@ public class MuPDFReaderView extends ReaderView {
 
 		float dx = Math.abs(x - mX);
 		float dy = Math.abs(y - mY);
-		if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
-		{
-			MuPDFView pageView = (MuPDFView)getDisplayedView();
-			if (pageView != null)
-			{
+		if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+			MuPDFView pageView = (MuPDFView) getDisplayedView();
+			if (pageView != null) {
 				pageView.continueDraw(x, y);
 			}
 			mX = x;
 			mY = y;
 		}
 	}
-	
+
 	public void releaseViews() {
 		this.applyToChildren(new ReaderView.ViewMapper() {
 			void applyToView(View view) {
-				((MuPDFView)view).releaseBitmaps();
+				((MuPDFView) view).releaseBitmaps();
 			}
 		});
 	}
@@ -233,19 +225,15 @@ public class MuPDFReaderView extends ReaderView {
 
 		// NOOP
 	}
-	
-	protected void onChildSetup(int i, View v) {
-		//TODO: page number in landscape
-		if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber == i) {
-			((MuPDFView) v).setSearchBoxes(SearchTaskResult.get().searchBoxes);
-			((MuPDFView) v).setSearchBoxesPrim(SearchTaskResult.get().searchBoxesPrim);
-		}
-		else {
-			((MuPDFView) v).setSearchBoxes(null);
-			((MuPDFView) v).setSearchBoxesPrim(null);
-		}
 
-		((MuPDFView) v).setLinkHighlighting(mLinksHighlighted);
+	protected void onChildSetup(int i, View v) {
+		if (SearchTaskResult.get() != null
+				&& SearchTaskResult.get().pageNumber == i)
+			((MuPDFView) v).setSearchBoxes(SearchTaskResult.get().searchBoxes);
+		else
+			((MuPDFView) v).setSearchBoxes(null);
+
+		((MuPDFView) v).setLinkHighlighting(mLinksEnabled);
 
 		((MuPDFView) v).setChangeReporter(new Runnable() {
 			public void run() {
@@ -260,7 +248,8 @@ public class MuPDFReaderView extends ReaderView {
 	}
 
 	protected void onMoveToChild(int i) {
-		if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
+		if (SearchTaskResult.get() != null
+				&& SearchTaskResult.get().pageNumber != i) {
 			SearchTaskResult.set(null);
 			resetupChildren();
 		}

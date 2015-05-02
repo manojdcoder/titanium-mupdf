@@ -20,9 +20,6 @@ public class MupdfModule extends KrollModule {
 	// Standard Debugging variables
 	private static final String TAG = "MupdfModule";
 	
-	@Kroll.constant public static final int ERROR_TEXT_NOT_FOUND = 404;
-	@Kroll.constant public static final int ERROR_NO_FURTHER_OCCURRENCES_FOUND = 402;
-	
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
 

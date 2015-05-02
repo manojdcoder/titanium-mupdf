@@ -8,8 +8,7 @@ public class MuPDFAlertInternal {
 	public final String title;
 	public int buttonPressed;
 
-	MuPDFAlertInternal(String aMessage, int aIconType, int aButtonGroupType,
-			String aTitle, int aButtonPressed) {
+	MuPDFAlertInternal(String aMessage, int aIconType, int aButtonGroupType, String aTitle, int aButtonPressed) {
 		message = aMessage;
 		iconType = aIconType;
 		buttonGroupType = aButtonGroupType;
@@ -26,8 +25,6 @@ public class MuPDFAlertInternal {
 	}
 
 	MuPDFAlert toAlert() {
-		return new MuPDFAlert(message, MuPDFAlert.IconType.values()[iconType],
-				MuPDFAlert.ButtonGroupType.values()[buttonGroupType], title,
-				MuPDFAlert.ButtonPressed.values()[buttonPressed]);
+		return new MuPDFAlert(message, MuPDFAlert.IconType.values()[iconType], MuPDFAlert.ButtonGroupType.values()[buttonGroupType], title, MuPDFAlert.ButtonPressed.values()[buttonPressed]);
 	}
 }

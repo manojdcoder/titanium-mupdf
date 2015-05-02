@@ -1,5 +1,12 @@
 package com.artifex.mupdflib;
 
+import java.util.ArrayList;
+
+import org.appcelerator.titanium.util.TiRHelper;
+import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
+
+import com.artifex.mupdflib.MuPDFCore.Cookie;
+
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -17,21 +24,16 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
-import java.util.ArrayList;
-
-import org.appcelerator.titanium.util.TiRHelper;
-import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
-
 /* This enum should be kept in line with the cooresponding C enum in mupdf.c */
 enum SignatureState {
-	NoSupport,
-	Unsigned,
-	Signed
+	NoSupport, Unsigned, Signed
 }
 
 abstract class PassClickResultVisitor {
 	public abstract void visitText(PassClickResultText result);
+
 	public abstract void visitChoice(PassClickResultChoice result);
+
 	public abstract void visitSignature(PassClickResultSignature result);
 }
 
@@ -111,134 +113,159 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private AsyncTask<PointF[], Void, Void> mAddStrikeOut;
 	private AsyncTask<PointF[][], Void, Void> mAddInk;
 	private AsyncTask<Integer, Void, Void> mDeleteAnnotation;
-	private AsyncTask<Void,Void,String> mCheckSignature;
-	private AsyncTask<Void,Void,Boolean> mSign;
+	private AsyncTask<Void, Void, String> mCheckSignature;
+	private AsyncTask<Void, Void, Boolean> mSign;
 	private Runnable changeReporter;
 
-	public MuPDFPageView(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, Point parentSize, Bitmap sharedHqBm) {
+	public MuPDFPageView(Context c,
+			FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core,
+			Point parentSize, Bitmap sharedHqBm) {
 		super(c, parentSize, sharedHqBm);
 		mFilePickerSupport = filePickerSupport;
 		mCore = core;
 		try {
-		mTextEntryBuilder = new AlertDialog.Builder(c);
-		mTextEntryBuilder.setTitle("MuPDF: "
-				+ getContext().getString(TiRHelper.getResource("string.fill_out_text_field")));
-		LayoutInflater inflater = (LayoutInflater) c
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		mEditText = (EditText) inflater.inflate(TiRHelper.getResource("layout.textentry"), null);
-		mTextEntryBuilder.setView(mEditText);
-		mTextEntryBuilder.setNegativeButton(TiRHelper.getResource("string.cancel"),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-		mTextEntryBuilder.setPositiveButton(TiRHelper.getResource("string.okay"),
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						mSetWidgetText = new AsyncTask<String, Void, Boolean>() {
-							@Override
-							protected Boolean doInBackground(String... arg0) {
-								return mCore.setFocusedWidgetText(mPageNumber,
-										arg0[0]);
-							}
+			mTextEntryBuilder = new AlertDialog.Builder(c);
+			mTextEntryBuilder
+					.setTitle("MuPDF: "
+							+ getContext()
+									.getString(
+											TiRHelper
+													.getResource("string.fill_out_text_field")));
+			LayoutInflater inflater = (LayoutInflater) c
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			mEditText = (EditText) inflater.inflate(
+					TiRHelper.getResource("layout.textentry"), null);
+			mTextEntryBuilder.setView(mEditText);
+			mTextEntryBuilder.setNegativeButton(
+					TiRHelper.getResource("string.cancel"),
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+					});
+			mTextEntryBuilder.setPositiveButton(
+					TiRHelper.getResource("string.okay"),
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							mSetWidgetText = new AsyncTask<String, Void, Boolean>() {
+								@Override
+								protected Boolean doInBackground(String... arg0) {
+									return mCore.setFocusedWidgetText(
+											mPageNumber, arg0[0]);
+								}
 
-							@Override
-							protected void onPostExecute(Boolean result) {
-								changeReporter.run();
-								if (!result)
-									invokeTextDialog(mEditText.getText()
-											.toString());
-							}
-						};
+								@Override
+								protected void onPostExecute(Boolean result) {
+									changeReporter.run();
+									if (!result)
+										invokeTextDialog(mEditText.getText()
+												.toString());
+								}
+							};
 
-						mSetWidgetText.execute(mEditText.getText().toString());
-					}
-		});
-		
-		mTextEntry = mTextEntryBuilder.create();
+							mSetWidgetText.execute(mEditText.getText()
+									.toString());
+						}
+					});
 
-		mChoiceEntryBuilder = new AlertDialog.Builder(c);
-		mChoiceEntryBuilder.setTitle("MuPDF: " + getContext().getString(TiRHelper.getResource("string.choose_value")));
+			mTextEntry = mTextEntryBuilder.create();
 
-		mSigningDialogBuilder = new AlertDialog.Builder(c);
-		mSigningDialogBuilder.setTitle("Select certificate and sign?");
-		mSigningDialogBuilder.setNegativeButton(TiRHelper.getResource("string.cancel"), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
+			mChoiceEntryBuilder = new AlertDialog.Builder(c);
+			mChoiceEntryBuilder.setTitle("MuPDF: "
+					+ getContext().getString(
+							TiRHelper.getResource("string.choose_value")));
 
-		});
-		mSigningDialogBuilder.setPositiveButton(TiRHelper.getResource("string.okay"), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				FilePicker picker = new FilePicker(mFilePickerSupport) {
-					@Override
-					void onPick(Uri uri) {
-						signWithKeyFile(uri);
-					}
-				};
+			mSigningDialogBuilder = new AlertDialog.Builder(c);
+			mSigningDialogBuilder.setTitle("Select certificate and sign?");
+			mSigningDialogBuilder.setNegativeButton(
+					TiRHelper.getResource("string.cancel"),
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
 
-				picker.pick();
-			}
+					});
+			mSigningDialogBuilder.setPositiveButton(
+					TiRHelper.getResource("string.okay"),
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							FilePicker picker = new FilePicker(
+									mFilePickerSupport) {
+								@Override
+								void onPick(Uri uri) {
+									signWithKeyFile(uri);
+								}
+							};
 
-		});
-		
-		mSignatureReportBuilder = new AlertDialog.Builder(c);
-		mSignatureReportBuilder.setTitle("Signature checked");
-		mSignatureReportBuilder.setPositiveButton(TiRHelper.getResource("string.okay"), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+							picker.pick();
+						}
 
-		mPasswordText = new EditText(c);
-		mPasswordText.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
-		mPasswordText.setTransformationMethod(new PasswordTransformationMethod());
+					});
 
-		mPasswordEntryBuilder = new AlertDialog.Builder(c);
-		mPasswordEntryBuilder.setTitle(TiRHelper.getResource("string.enter_password"));
-		mPasswordEntryBuilder.setView(mPasswordText);
-		mPasswordEntryBuilder.setNegativeButton(TiRHelper.getResource("string.cancel"), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+			mSignatureReportBuilder = new AlertDialog.Builder(c);
+			mSignatureReportBuilder.setTitle("Signature checked");
+			mSignatureReportBuilder.setPositiveButton(
+					TiRHelper.getResource("string.okay"),
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+					});
+
+			mPasswordText = new EditText(c);
+			mPasswordText.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
+			mPasswordText
+					.setTransformationMethod(new PasswordTransformationMethod());
+
+			mPasswordEntryBuilder = new AlertDialog.Builder(c);
+			mPasswordEntryBuilder.setTitle(TiRHelper
+					.getResource("string.enter_password"));
+			mPasswordEntryBuilder.setView(mPasswordText);
+			mPasswordEntryBuilder.setNegativeButton(
+					TiRHelper.getResource("string.cancel"),
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+					});
 		} catch (ResourceNotFoundException exp) {
 		}
 		mPasswordEntry = mPasswordEntryBuilder.create();
 	}
 
 	private void signWithKeyFile(final Uri uri) {
-		mPasswordEntry.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-		mPasswordEntry.setButton(AlertDialog.BUTTON_POSITIVE, "Sign", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-				signWithKeyFileAndPassword(uri, mPasswordText.getText().toString());
-			}
-		});
+		mPasswordEntry.getWindow().setSoftInputMode(
+				WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		mPasswordEntry.setButton(AlertDialog.BUTTON_POSITIVE, "Sign",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						signWithKeyFileAndPassword(uri, mPasswordText.getText()
+								.toString());
+					}
+				});
 
 		mPasswordEntry.show();
 	}
 
 	private void signWithKeyFileAndPassword(final Uri uri, final String password) {
-		mSign = new AsyncTask<Void,Void,Boolean>() {
+		mSign = new AsyncTask<Void, Void, Boolean>() {
 			@Override
 			protected Boolean doInBackground(Void... params) {
-				return mCore.signFocusedSignature(Uri.decode(uri.getEncodedPath()), password);
+				return mCore.signFocusedSignature(
+						Uri.decode(uri.getEncodedPath()), password);
 			}
+
 			@Override
 			protected void onPostExecute(Boolean result) {
-				if (result)
-				{
+				if (result) {
 					changeReporter.run();
-				}
-				else
-				{
+				} else {
 					mPasswordText.setText("");
 					signWithKeyFile(uri);
 				}
@@ -247,7 +274,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		};
 
 		mSign.execute();
-
 	}
 
 	public LinkInfo hitLink(float x, float y) {
@@ -258,13 +284,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		float scale = mSourceScale * (float) getWidth() / (float) mSize.x;
 		float docRelX = (x - getLeft()) / scale;
 		float docRelY = (y - getTop()) / scale;
-		
-		if (mLinks!=null) {
-			for (LinkInfo l : mLinks)
-				if (l.rect.contains(docRelX, docRelY))
-					return l;
-		}
-		
+
+		for (LinkInfo l : mLinks)
+			if (l.rect.contains(docRelX, docRelY))
+				return l;
+
 		return null;
 	}
 
@@ -299,12 +323,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		AlertDialog dialog = mChoiceEntryBuilder.create();
 		dialog.show();
 	}
+
 	private void invokeSignatureCheckingDialog() {
-		mCheckSignature = new AsyncTask<Void,Void,String> () {
+		mCheckSignature = new AsyncTask<Void, Void, String>() {
 			@Override
 			protected String doInBackground(Void... params) {
 				return mCore.checkFocusedSignature();
 			}
+
 			@Override
 			protected void onPostExecute(String result) {
 				AlertDialog report = mSignatureReportBuilder.create();
@@ -320,13 +346,13 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		AlertDialog dialog = mSigningDialogBuilder.create();
 		dialog.show();
 	}
-	
+
 	private void warnNoSignatureSupport() {
 		AlertDialog dialog = mSignatureReportBuilder.create();
 		dialog.setTitle("App built with no signature support");
 		dialog.show();
 	}
-	
+
 	public void setChangeReporter(Runnable reporter) {
 		changeReporter = reporter;
 	}
@@ -396,11 +422,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 						}
 
 						@Override
-						public void visitSignature(PassClickResultSignature result) {
-							//if (result.isSigned)
-							//	invokeSignatureCheckingDialog();
-							//else
-							//	invokeSigningDialog();
+						public void visitSignature(
+								PassClickResultSignature result) {
 							switch (result.state) {
 							case NoSupport:
 								warnNoSignatureSupport();
@@ -424,7 +447,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		return Hit.Nothing;
 	}
 
-	@SuppressWarnings("deprecation")
 	@TargetApi(11)
 	public boolean copySelection() {
 		final StringBuilder text = new StringBuilder();
@@ -579,59 +601,48 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		return true;
 	}
 
-	
-	/*
-	protected void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY,
-			int patchWidth, int patchHeight) {
-		mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY,
-				patchWidth, patchHeight);
-	}
-	*/
 	@Override
-	protected CancellableTaskDefinition<Void, Void> getDrawPageTask(final Bitmap bm, final int sizeX, final int sizeY,
-			final int patchX, final int patchY, final int patchWidth, final int patchHeight) {
+	protected CancellableTaskDefinition<Void, Void> getDrawPageTask(
+			final Bitmap bm, final int sizeX, final int sizeY,
+			final int patchX, final int patchY, final int patchWidth,
+			final int patchHeight) {
 		return new MuPDFCancellableTaskDefinition<Void, Void>(mCore) {
 			@Override
-			public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
-				// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
+			public Void doInBackground(MuPDFCore.Cookie cookie, Void... params) {
+				// Workaround bug in Android Honeycomb 3.x, where the bitmap
+				// generation count
 				// is not incremented when drawing.
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-						Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB
+						&& Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 					bm.eraseColor(0);
-				mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
+				mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY,
+						patchWidth, patchHeight, cookie);
 				return null;
 			}
 		};
 
 	}
 
-	
-	/*
-	protected void updatePage(Bitmap bm, int sizeX, int sizeY,
-			int patchX, int patchY, int patchWidth, int patchHeight) {
-		mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY,
-				patchWidth, patchHeight);
-	}
-	*/
-	@Override
-	protected CancellableTaskDefinition<Void, Void> getUpdatePageTask(final Bitmap bm, final int sizeX, final int sizeY,
-			final int patchX, final int patchY, final int patchWidth, final int patchHeight)
-	{
+	protected CancellableTaskDefinition<Void, Void> getUpdatePageTask(
+			final Bitmap bm, final int sizeX, final int sizeY,
+			final int patchX, final int patchY, final int patchWidth,
+			final int patchHeight) {
 		return new MuPDFCancellableTaskDefinition<Void, Void>(mCore) {
 
 			@Override
-			public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
-				// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
+			public Void doInBackground(MuPDFCore.Cookie cookie, Void... params) {
+				// Workaround bug in Android Honeycomb 3.x, where the bitmap
+				// generation count
 				// is not incremented when drawing.
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-						Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB
+						&& Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 					bm.eraseColor(0);
-				mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
+				mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY,
+						patchWidth, patchHeight, cookie);
 				return null;
 			}
 		};
 	}
-
 
 	@Override
 	protected LinkInfo[] getLinkInfo() {

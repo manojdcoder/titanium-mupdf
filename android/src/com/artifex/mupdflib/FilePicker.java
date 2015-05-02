@@ -3,7 +3,6 @@ package com.artifex.mupdflib;
 import android.net.Uri;
 
 public abstract class FilePicker {
-	
 	public interface FilePickerSupport {
 		void performPickFor(FilePicker picker);
 	}
@@ -20,4 +19,3 @@ public abstract class FilePicker {
 
 	abstract void onPick(Uri uri);
 }
-

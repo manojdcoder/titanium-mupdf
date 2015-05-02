@@ -18,7 +18,14 @@ if (!file.exists()) {
 
 console.log(">>EXISTS>>>" + file.exists());
 
-var pdfReader = READER_MODULE.createPDFReader({
+var processDialog = Ti.UI.Android.createProgressIndicator({
+	message : 'Searching...',
+	location : Ti.UI.Android.PROGRESS_INDICATOR_DIALOG,
+	type : Ti.UI.Android.PROGRESS_INDICATOR_INDETERMINANT,
+	cancelable : false
+});
+
+var pdfReader = READER_MODULE.createView({
 	file : file
 });
 
@@ -60,13 +67,17 @@ win.addEventListener("open", function(e) {
 		});
 		searchItem.addEventListener("click", function(e) {
 			var toast = Ti.UI.createNotification({
-				message : "Search for the keyword 'for' in the entire pdf",
+				message : "Search for the total occurences of keyword 'for' in the entire pdf. Note : Touch events will be disabled during search",
 				duration : Ti.UI.NOTIFICATION_DURATION_LONG
 			});
 			toast.show();
 			count = 0;
+			processDialog.show();
+			pdfReader.touchEnabled = false;
 			pdfReader.onSearch(searchResult);
-			pdfReader.search("for", 0);
+			//start search from page no. 1.
+			//third parameter is optional, defaults to false. Disable the rendering of the search. If true the page will be rendered with results highlighted
+			pdfReader.search("for", 1, false);
 		});
 		var previousItem = e.menu.add({
 			title : "Previous",
@@ -88,7 +99,7 @@ win.addEventListener("open", function(e) {
 		});
 		searchPreviousItem.addEventListener("click", function(e) {
 			pdfReader.onSearch(logSearch);
-			pdfReader.search("for", -1);
+			pdfReader.search("for", pdfReader.getCurrentPage() - 1, true);
 		});
 		var searchNextItem = e.menu.add({
 			title : "Search Next",
@@ -96,43 +107,42 @@ win.addEventListener("open", function(e) {
 		});
 		searchNextItem.addEventListener("click", function(e) {
 			pdfReader.onSearch(logSearch);
-			pdfReader.search("for", 1);
+			pdfReader.search("for", pdfReader.getCurrentPage() + 1, true);
 		});
 		var toggleHightLight = e.menu.add({
 			title : "Toggle highlight",
 			showAsAction : Ti.Android.SHOW_AS_ACTION_IF_ROOM
 		});
 		toggleHightLight.addEventListener("click", function(e) {
-			enabled = !enabled;
-			pdfReader.setHighlightColor( enabled ? "#0000FF" : "transparent");
+			pdfReader.setHighlightColor( enabled ? "#500000FF" : "transparent");
 			pdfReader.onSearch(logSearch);
-			pdfReader.search("for", 0);
+			//search and render results for the current page
+			pdfReader.search("for", pdfReader.getCurrentPage(), true);
+			enabled = !enabled;
 		});
 	};
 	activity.invalidateOptionsMenu();
 });
 
-function searchResult(result) {
-	console.log(result);
-	if (count == 0 && result.error) {
-		if (result.code == READER_MODULE.ERROR_TEXT_NOT_FOUND) {
-			alert("No matches found");
-		} else if (result.code == READER_MODULE.ERROR_NO_FURTHER_OCCURRENCES_FOUND) {
-			alert("No more occurrences on the given direction");
-		}
-		return;
-	}
-	count += result.count;
-	if (result.success && result.currentPage < pdfReader.getPageCount()) {
-		pdfReader.search("for", 1);
-	} else {
-		pdfReader.setCurrentPage(1);
-		alert("Total occurence : " + count);
-	}
-}
-
 function logSearch(evt) {
 	console.log(evt);
+}
+
+function searchResult(result) {
+	console.log(result);
+	count += result.count;
+	if (result.success && result.currentPage < pdfReader.getPageCount()) {
+		// search for next page until end of the pdf
+		pdfReader.search("for", result.currentPage + 1);
+	} else {
+		processDialog.hide();
+		pdfReader.touchEnabled = true;
+		if (count == 0) {
+			alert("No matches found");
+		} else {
+			alert("Total occurence : " + count);
+		}
+	}
 }
 
 Ti.Gesture.addEventListener("orientationchange", function() {
