@@ -170,6 +170,3 @@ win.open();
 * v1.4
 	* added methods setHighlightColor
 	* added events click and change
-  
-* v1.1
-  	* added x86 support
