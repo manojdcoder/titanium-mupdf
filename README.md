@@ -162,6 +162,9 @@ win.open();
 ```
 
 ## Changelog
+* v1.6
+	* crash issues fixed
+	
 * v1.5
 	* replaced createPDFReader with createView
 	* updated mupdf library to 1.7
