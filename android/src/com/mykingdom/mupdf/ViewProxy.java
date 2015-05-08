@@ -15,6 +15,7 @@ import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
+import org.appcelerator.kroll.common.Log;
 import org.appcelerator.kroll.common.TiConfig;
 import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.titanium.TiC;
@@ -38,7 +39,6 @@ import com.artifex.mupdflib.FilePicker.FilePickerSupport;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Message;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -48,15 +48,13 @@ import android.view.View;
 public class ViewProxy extends TiViewProxy {
 
 	// Standard Debugging variables
-	private static final String LCAT = "PDFReaderProxy";
-	private static final boolean DBG = TiConfig.LOGD;
+	private static final String TAG = "PDFReaderProxy";
 
 	private static final int MSG_FIRST_ID = TiViewProxy.MSG_LAST_ID + 1;
 	private static final int MSG_SET_CURRENT_PAGE = MSG_FIRST_ID + 100;
 
 	private class PDFReaderView extends TiUIView implements FilePickerSupport {
 
-		private String mFileName;
 		private MuPDFReaderView mDocView;
 		private MuPDFCore core;
 		private SearchTask mSearchTask;
@@ -119,7 +117,7 @@ public class ViewProxy extends TiViewProxy {
 							.get(TiC.PROPERTY_FILE);
 					File file = fileProxy.getBaseFile().getNativeFile();
 					if (file.exists()) {
-						Log.i(LCAT, "PDF exists, trying to load");
+						Log.d(TAG, "PDF exists, trying to load");
 						core = openFile(Uri.decode(Uri.fromFile(file)
 								.getEncodedPath()));
 						mDocView.setAdapter(new MuPDFPageAdapter(getActivity(),
@@ -130,7 +128,7 @@ public class ViewProxy extends TiViewProxy {
 				} catch (Exception ex) {
 					String err = (ex.getMessage() == null) ? "Something wrong with the file given"
 							: ex.getMessage();
-					Log.e(LCAT, err);
+					Log.e(TAG, err);
 				}
 			}
 
@@ -147,10 +145,7 @@ public class ViewProxy extends TiViewProxy {
 		}
 
 		private MuPDFCore openFile(String path) {
-			int lastSlashPos = path.lastIndexOf('/');
-			mFileName = new String(lastSlashPos == -1 ? path
-					: path.substring(lastSlashPos + 1));
-			System.out.println("Trying to open " + path);
+			Log.d(TAG, "Trying to open " + path);
 			try {
 				core = new MuPDFCore(getActivity(), path);
 				mSearchTask = new SearchTask(tiApplication, core) {
