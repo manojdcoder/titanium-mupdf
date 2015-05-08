@@ -160,10 +160,10 @@ public class ViewProxy extends TiViewProxy {
 						if (renderResult) {
 							SearchTaskResult.set(result);
 							mDocView.setDisplayedViewIndex(result.pageNumber);
+							mDocView.resetupChildren();
 						} else {
 							SearchTaskResult.set(null);
 						}
-						mDocView.resetupChildren();
 						if (mSearchCallback != null) {
 							HashMap<String, Object> params = new HashMap<String, Object>();
 							params.put(TiC.PROPERTY_COUNT,
@@ -228,8 +228,6 @@ public class ViewProxy extends TiViewProxy {
 		public void search(String key, int pageNumber, boolean showResult) {
 			if (mSearchTask == null)
 				return;
-			// stop any on going search
-			mSearchTask.stop();
 			renderResult = showResult;
 			mSearchTask.go(key, 0, currentPage - 1, pageNumber - 1);
 		}

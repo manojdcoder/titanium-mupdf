@@ -1,48 +1,15 @@
 package com.artifex.mupdflib;
 
-import org.appcelerator.titanium.util.TiRHelper;
-import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
-
-import com.mykingdom.mupdf.MupdfModule;
-
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.RectF;
-import android.os.Handler;
-
-class ProgressDialogX extends ProgressDialog {
-	public ProgressDialogX(Context context) {
-		super(context);
-	}
-
-	private boolean mCancelled = false;
-
-	public boolean isCancelled() {
-		return mCancelled;
-	}
-
-	@Override
-	public void cancel() {
-		mCancelled = true;
-		super.cancel();
-	}
-}
 
 public abstract class SearchTask {
-	private static final int SEARCH_PROGRESS_DELAY = 200;
-	private final Context mContext;
+	
 	private final MuPDFCore mCore;
-	private final Handler mHandler;
-	private final AlertDialog.Builder mAlertBuilder;
 	private AsyncTask<Void, Integer, Object> mSearchTask;
 
 	public SearchTask(Context context, MuPDFCore core) {
-		mContext = context;
 		mCore = core;
-		mHandler = new Handler();
-		mAlertBuilder = new AlertDialog.Builder(context);
 	}
 
 	protected abstract void onTextFound(SearchTaskResult result);
@@ -66,22 +33,6 @@ public abstract class SearchTask {
 		final int startIndex = searchPage == -1 ? displayPage : searchPage
 				+ increment;
 
-		final ProgressDialogX progressDialog = new ProgressDialogX(mContext);
-		try {
-			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			progressDialog.setTitle(mContext.getString(TiRHelper
-					.getResource("string.searching_")));
-		} catch (ResourceNotFoundException exp) {
-
-		}
-		progressDialog
-				.setOnCancelListener(new DialogInterface.OnCancelListener() {
-					public void onCancel(DialogInterface dialog) {
-						stop();
-					}
-				});
-		progressDialog.setMax(mCore.countPages());
-
 		mSearchTask = new AsyncTask<Void, Integer, Object>() {
 			@Override
 			protected Object doInBackground(Void... params) {
@@ -102,7 +53,6 @@ public abstract class SearchTask {
 
 			@Override
 			protected void onPostExecute(Object result) {
-				progressDialog.cancel();
 				if (result instanceof SearchTaskResult) {
 					onTextFound((SearchTaskResult) result);
 				} else {
@@ -112,25 +62,17 @@ public abstract class SearchTask {
 
 			@Override
 			protected void onCancelled() {
-				progressDialog.cancel();
+				
 			}
 
 			@Override
 			protected void onProgressUpdate(Integer... values) {
-				progressDialog.setProgress(values[0].intValue());
+				
 			}
 
 			@Override
 			protected void onPreExecute() {
 				super.onPreExecute();
-				mHandler.postDelayed(new Runnable() {
-					public void run() {
-						if (!progressDialog.isCancelled()) {
-							progressDialog.show();
-							progressDialog.setProgress(startIndex);
-						}
-					}
-				}, SEARCH_PROGRESS_DELAY);
 			}
 		};
 
