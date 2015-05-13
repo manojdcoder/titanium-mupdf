@@ -27,6 +27,7 @@ mupdf.createView({
 ```javascript
 var enabled = true;
 var count = 0;
+var keyword = "because";
 
 var win = Ti.UI.createWindow({
 	backgroundColor : 'white',
@@ -94,17 +95,16 @@ win.addEventListener("open", function(e) {
 		});
 		searchItem.addEventListener("click", function(e) {
 			var toast = Ti.UI.createNotification({
-				message : "Search for the total occurences of keyword 'for' in the entire pdf. Note : Touch events will be disabled during search",
+				message : "Search for the total occurences of keyword '" + keyword + "' in the entire pdf. Note : Touch events will be disabled during search",
 				duration : Ti.UI.NOTIFICATION_DURATION_LONG
 			});
 			toast.show();
 			count = 0;
 			processDialog.show();
-			pdfReader.touchEnabled = false;
 			pdfReader.onSearch(searchResult);
 			//start search from page no. 1.
 			//third parameter is optional, defaults to false. Disable the rendering of the search. If true the page will be rendered with results highlighted
-			pdfReader.search("for", 1, false);
+			pdfReader.search(keyword, 1, false);
 		});
 		var previousItem = e.menu.add({
 			title : "Previous",
@@ -126,7 +126,7 @@ win.addEventListener("open", function(e) {
 		});
 		searchPreviousItem.addEventListener("click", function(e) {
 			pdfReader.onSearch(logSearch);
-			pdfReader.search("for", pdfReader.getCurrentPage() - 1, true);
+			pdfReader.search(keyword, pdfReader.getCurrentPage() - 1, true);
 		});
 		var searchNextItem = e.menu.add({
 			title : "Search Next",
@@ -134,7 +134,7 @@ win.addEventListener("open", function(e) {
 		});
 		searchNextItem.addEventListener("click", function(e) {
 			pdfReader.onSearch(logSearch);
-			pdfReader.search("for", pdfReader.getCurrentPage() + 1, true);
+			pdfReader.search(keyword, pdfReader.getCurrentPage() + 1, true);
 		});
 		var toggleHightLight = e.menu.add({
 			title : "Toggle highlight",
@@ -144,7 +144,7 @@ win.addEventListener("open", function(e) {
 			pdfReader.setHighlightColor( enabled ? "#500000FF" : "transparent");
 			pdfReader.onSearch(logSearch);
 			//search and render results for the current page
-			pdfReader.search("for", pdfReader.getCurrentPage(), true);
+			pdfReader.search(keyword, pdfReader.getCurrentPage(), true);
 			enabled = !enabled;
 		});
 	};
@@ -156,14 +156,13 @@ function logSearch(evt) {
 }
 
 function searchResult(result) {
-	console.log(result);
+	console.log("Searh Result: ", result);
 	count += result.count;
-	if (result.success && result.currentPage < pdfReader.getPageCount()) {
+	if (result.currentPage < pdfReader.getPageCount()) {
 		// search for next page until end of the pdf
-		pdfReader.search("for", result.currentPage + 1);
+		pdfReader.search(keyword, result.currentPage + 1);
 	} else {
 		processDialog.hide();
-		pdfReader.touchEnabled = true;
 		if (count == 0) {
 			alert("No matches found");
 		} else {
