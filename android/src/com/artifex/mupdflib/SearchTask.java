@@ -6,15 +6,13 @@ import android.graphics.RectF;
 public abstract class SearchTask {
 	
 	private final MuPDFCore mCore;
-	private AsyncTask<Void, Integer, Object> mSearchTask;
+	private AsyncTask<Void, Integer, SearchTaskResult> mSearchTask;
 
 	public SearchTask(Context context, MuPDFCore core) {
 		mCore = core;
 	}
 
 	protected abstract void onTextFound(SearchTaskResult result);
-
-	protected abstract void onTextNotFound(int page);
 
 	public void stop() {
 		if (mSearchTask != null) {
@@ -33,31 +31,28 @@ public abstract class SearchTask {
 		final int startIndex = searchPage == -1 ? displayPage : searchPage
 				+ increment;
 
-		mSearchTask = new AsyncTask<Void, Integer, Object>() {
+		mSearchTask = new AsyncTask<Void, Integer, SearchTaskResult>() {
 			@Override
-			protected Object doInBackground(Void... params) {
+			protected SearchTaskResult doInBackground(Void... params) {
 				int index = startIndex;
-
-				while (0 <= index && index < mCore.countPages()
+				int max = index + 1;
+				
+				while (0 <= index && index < max
 						&& !isCancelled()) {
 					publishProgress(index);
 					RectF searchHits[] = mCore.searchPage(index, text);
 
 					if (searchHits != null && searchHits.length > 0)
-						return new SearchTaskResult(text, index, searchHits);
+						return new SearchTaskResult(text, startIndex, searchHits);
 
-					index += increment;
+					index = max;
 				}
-				return index;
+				return new SearchTaskResult(text, startIndex, null);
 			}
 
 			@Override
-			protected void onPostExecute(Object result) {
-				if (result instanceof SearchTaskResult) {
-					onTextFound((SearchTaskResult) result);
-				} else {
-					onTextNotFound((Integer) result);
-				}
+			protected void onPostExecute(SearchTaskResult result) {
+				onTextFound(result);
 			}
 
 			@Override

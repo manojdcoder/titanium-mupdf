@@ -31,7 +31,6 @@ import com.artifex.mupdflib.MuPDFCore;
 import com.artifex.mupdflib.MuPDFPageAdapter;
 import com.artifex.mupdflib.MuPDFReaderView;
 import com.artifex.mupdflib.PageView;
-import com.artifex.mupdflib.ReaderView;
 import com.artifex.mupdflib.SearchTask;
 import com.artifex.mupdflib.SearchTaskResult;
 import com.artifex.mupdflib.FilePicker.FilePickerSupport;
@@ -39,9 +38,6 @@ import com.artifex.mupdflib.FilePicker.FilePickerSupport;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Message;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.View;
 
 // This proxy can be created by calling Mupdf.createPDFReader({file: "path"})
 @Kroll.proxy(creatableInModule = MupdfModule.class)
@@ -152,34 +148,20 @@ public class ViewProxy extends TiViewProxy {
 
 					@Override
 					protected void onTextFound(SearchTaskResult result) {
+						int count = result.searchBoxes != null ? result.searchBoxes.length
+								: 0;
+						int pageNumber = result.pageNumber + 1;
 						if (renderResult) {
-							SearchTaskResult.set(result);
+							if (count != 0) {
+								SearchTaskResult.set(result);
+							}
 							mDocView.setDisplayedViewIndex(result.pageNumber);
 							mDocView.resetupChildren();
-						} else {
-							SearchTaskResult.set(null);
 						}
 						if (mSearchCallback != null) {
 							HashMap<String, Object> params = new HashMap<String, Object>();
-							params.put(TiC.PROPERTY_COUNT,
-									result.searchBoxes.length);
-							params.put(TiC.PROPERTY_CURRENT_PAGE,
-									result.pageNumber + 1);
-							params.put(TiC.EVENT_PROPERTY_ERROR, false);
-							params.put(TiC.PROPERTY_SUCCESS, true);
-							mSearchCallback.call(getKrollObject(), params);
-						}
-					}
-
-					@Override
-					protected void onTextNotFound(int pageNumber) {
-						if (mSearchCallback != null) {
-							HashMap<String, Object> params = new HashMap<String, Object>();
-							params.put(TiC.PROPERTY_COUNT, 0);
-							params.put(TiC.PROPERTY_CURRENT_PAGE,
-									pageNumber + 1);
-							params.put(TiC.EVENT_PROPERTY_ERROR, true);
-							params.put(TiC.PROPERTY_SUCCESS, false);
+							params.put(TiC.PROPERTY_COUNT, count);
+							params.put(TiC.PROPERTY_CURRENT_PAGE, pageNumber);
 							mSearchCallback.call(getKrollObject(), params);
 						}
 					}
