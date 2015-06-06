@@ -162,6 +162,12 @@ win.open();
 ```
 
 ## Changelog
+* 1.8
+	* Verical Scrolling
+
+* 1.7
+	* Search callback was never called when no results found on a page - fixed
+
 * v1.6
 	* crash issues fixed
 	
