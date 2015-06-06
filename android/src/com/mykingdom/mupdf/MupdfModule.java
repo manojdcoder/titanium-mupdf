@@ -21,7 +21,8 @@ public class MupdfModule extends KrollModule {
 	private static final String TAG = "MupdfModule";
 	
 	// You can define constants with @Kroll.constant, for example:
-	// @Kroll.constant public static final String EXTERNAL_NAME = value;
+	@Kroll.constant public static final int DIRECTION_VERTICAL = 0;
+	@Kroll.constant public static final int DIRECTION_HORIZONTAL = 1;
 
 	public MupdfModule() {
 		super();

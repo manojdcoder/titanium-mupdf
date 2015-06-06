@@ -1,6 +1,6 @@
 var enabled = true;
 var count = 0;
-var keyword = "because";
+var keyword = "the";
 
 var win = Ti.UI.createWindow({
 	backgroundColor : 'white',
@@ -31,6 +31,9 @@ var pdfReader = READER_MODULE.createView({
 });
 
 //pdfReader.loadPDFFromFile(file);
+
+//READER_MODULE.DIRECTION_VERTICAL || READER_MODULE.DIRECTION_HORIZONTAL (default)
+pdfReader.setScrollingDirection(READER_MODULE.DIRECTION_VERTICAL);
 
 win.add(pdfReader);
 

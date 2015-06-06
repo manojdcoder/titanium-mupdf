@@ -2,7 +2,7 @@
 # this is your module manifest and used by Titanium
 # during compilation, packaging, distribution, etc.
 #
-version: 1.7
+version: 1.8
 apiversion: 2
 architectures: armeabi armeabi-v7a x86
 description: mupdf
@@ -15,4 +15,4 @@ name: mupdf
 moduleid: com.mykingdom.mupdf
 guid: 23304e3b-0417-41d3-b6f1-b52c11eb3c73
 platform: android
-minsdk: 3.5.1.GA
+minsdk: 3.1.3.GA

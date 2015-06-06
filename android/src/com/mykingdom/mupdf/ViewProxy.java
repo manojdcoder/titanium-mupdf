@@ -198,6 +198,12 @@ public class ViewProxy extends TiViewProxy {
 			mDocView.moveToPrevious();
 		}
 
+		public void setScrollingDirectionHorizontal(boolean value){
+			if (core == null)
+				return;
+			mDocView.setScrollingDirectionHorizontal(value);
+		}
+		
 		public void onSearch(KrollFunction callback) {
 			mSearchCallback = callback;
 		}
@@ -298,6 +304,11 @@ public class ViewProxy extends TiViewProxy {
 		getPDFReaderView().moveToPrevious();
 	}
 
+	@Kroll.method
+	public void setScrollingDirection(int direction) {
+		getPDFReaderView().setScrollingDirectionHorizontal(direction == MupdfModule.DIRECTION_HORIZONTAL);
+	}
+	
 	@Kroll.method
 	public void onSearch(KrollFunction callback) {
 		getPDFReaderView().onSearch(callback);
