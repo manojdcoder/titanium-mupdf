@@ -164,6 +164,7 @@ win.open();
 ## Changelog
 * 1.8
 	* Verical Scrolling
+	* Changed Titanim SDK to 3.1.3.GA 
 
 * 1.7
 	* Search callback was never called when no results found on a page - fixed
