@@ -85,7 +85,7 @@ public class MuPDFCore {
 		{
 			cookiePtr = createCookie();
 			if (cookiePtr == 0)
-				throw new OutOfMemoryError();
+				throw new RuntimeException("createCookie haven't returned anything");//throw new OutOfMemoryError();
 		}
 
 		public void abort()
