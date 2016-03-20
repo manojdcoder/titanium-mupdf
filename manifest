@@ -1,8 +1,18 @@
-#appname: mupdf
-#publisher: MyKingdom
-#url: 
-#image: appicon.png
-#appid: com.mykingdom.mupdf
-#desc: titanium mupdf extension
-#type: module
-#guid: 70de414e-5683-47da-ac77-da6abe26b9e6
+#
+# this is your module manifest and used by Titanium
+# during compilation, packaging, distribution, etc.
+#
+version: 1.9.0
+apiversion: 2
+architectures: armeabi armeabi-v7a x86
+description: mupdf
+author: Manojkumar
+license: MIT
+copyright: @ 2016
+
+# these should not be edited
+name: mupdf
+moduleid: com.mykingdom.mupdf
+guid: 23304e3b-0417-41d3-b6f1-b52c11eb3c73
+platform: android
+minsdk: 4.1.0.GA
