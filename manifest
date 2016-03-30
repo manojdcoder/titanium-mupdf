@@ -15,4 +15,4 @@ name: mupdf
 moduleid: com.mykingdom.mupdf
 guid: 23304e3b-0417-41d3-b6f1-b52c11eb3c73
 platform: android
-minsdk: 4.1.0.GA
+minsdk: 5.1.1.GA

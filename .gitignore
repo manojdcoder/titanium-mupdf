@@ -1,5 +1,9 @@
 .DS_Store
+.apt_generated
 tmp
 bin
 build
-.apt_generated
+/dist/mupdf.jar
+/libs/armeabi/libcom.mykingdom.mupdf.so
+/libs/armeabi-v7a/libcom.mykingdom.mupdf.so
+/libs/x86/libcom.mykingdom.mupdf.so
