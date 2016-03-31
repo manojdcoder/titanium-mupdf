@@ -164,9 +164,14 @@ win.open();
 ```
 
 ## Changelog
+
+* 1.9.0
+	* Updated MuPDF library to the latest version (1.8) which addresses several crash issues.
+	* Updated Titanim SDK to 5.1.1.GA 
+
 * 1.8
 	* Verical Scrolling
-	* Changed Titanim SDK to 3.1.3.GA 
+	* Updated Titanim SDK to 3.1.3.GA 
 
 * 1.7
 	* Search callback was never called when no results found on a page - fixed
