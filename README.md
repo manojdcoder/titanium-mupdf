@@ -1,6 +1,4 @@
-#PDF Reader
-
-## Description
+## PDF Reader
 
 This module extends the android project here - https://github.com/joniks/Android-MuPDF/ 
 
