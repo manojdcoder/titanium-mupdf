@@ -163,6 +163,12 @@ win.open();
 
 ## Changelog
 
+* 2.0.1
+	* Updated Titanim SDK to 6.0.3.GA
+
+* 2.0.0
+	* Updated Titanim SDK to 6.0.0.GA 
+
 * 1.9.0
 	* Updated MuPDF library to the latest version (1.8) which addresses several crash issues.
 	* Updated Titanim SDK to 5.1.1.GA 
