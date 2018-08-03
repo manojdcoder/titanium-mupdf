@@ -22,6 +22,9 @@ public class MuPDFReaderView extends ReaderView {
 	private boolean tapDisabled = false;
 	private int tapPageMargin;
 
+	protected void onTapExternalUrl(String url) {
+	}
+
 	protected void onTapMainDocArea() {
 	}
 
@@ -79,8 +82,10 @@ public class MuPDFReaderView extends ReaderView {
 			Hit item = pageView.passClickEvent(e.getX(), e.getY());
 			onHit(item);
 			if (item == Hit.Nothing) {
-				if (mLinksEnabled
-						&& pageView != null
+				// if (mLinksEnabled
+				// 		&& pageView != null
+				// 		&& (link = pageView.hitLink(e.getX(), e.getY())) != null) {
+				if (pageView != null
 						&& (link = pageView.hitLink(e.getX(), e.getY())) != null) {
 					link.acceptVisitor(new LinkInfoVisitor() {
 						@Override
@@ -91,9 +96,7 @@ public class MuPDFReaderView extends ReaderView {
 
 						@Override
 						public void visitExternal(LinkInfoExternal li) {
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
-									.parse(li.url));
-							mContext.startActivity(intent);
+							onTapExternalUrl(li.url);
 						}
 
 						@Override

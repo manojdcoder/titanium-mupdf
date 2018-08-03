@@ -46,6 +46,8 @@ public class ViewProxy extends TiViewProxy {
 	// Standard Debugging variables
 	private static final String TAG = "PDFReaderProxy";
 
+	public static final String EVENT_LINK_CLICK = "linkclick";
+
 	private static final int MSG_FIRST_ID = TiViewProxy.MSG_LAST_ID + 1;
 	private static final int MSG_SET_CURRENT_PAGE = MSG_FIRST_ID + 100;
 
@@ -97,6 +99,15 @@ public class ViewProxy extends TiViewProxy {
 				protected void onTapMainDocArea() {
 					if (getProxy().hasListeners(TiC.EVENT_CLICK)) {
 						getProxy().fireEvent(TiC.EVENT_CLICK, null);
+					}
+				}
+
+				@Override
+				protected void onTapExternalUrl(String url) {
+					if (getProxy().hasListeners(EVENT_LINK_CLICK)) {
+						KrollDict data = new KrollDict();
+						data.put(TiC.EVENT_PROPERTY_URL, url);
+						getProxy().fireEvent(EVENT_LINK_CLICK, data);
 					}
 				}
 			};
@@ -219,6 +230,10 @@ public class ViewProxy extends TiViewProxy {
 			PageView.HIGHLIGHT_COLOR = TiConvert.toColor(color);
 		}
 
+		public void setLinkHighlighting(boolean enabled) {
+			mDocView.setLinksEnabled(TiConvert.toBoolean(enabled));
+		}
+
 		@Override
 		public void performPickFor(FilePicker picker) {
 
@@ -327,5 +342,10 @@ public class ViewProxy extends TiViewProxy {
 	@Kroll.method
 	public void setHighlightColor(String color) {
 		getPDFReaderView().setHighlightColor(color);
+	}
+
+	@Kroll.method
+	public void setLinkHighlighting(boolean enabled) {
+		getPDFReaderView().setLinkHighlighting(enabled);
 	}
 }
