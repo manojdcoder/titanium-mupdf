@@ -163,6 +163,11 @@ win.open();
 
 ## Changelog
 
+* v3.0.0
+	* Updated Titanim SDK to 7.0.1.GA
+	* Added method setLinkHighlighting
+	* Added linkclick event
+	
 * v2.0.1
 	* Updated Titanim SDK to 6.0.3.GA
 
