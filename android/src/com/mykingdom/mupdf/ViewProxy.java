@@ -129,7 +129,12 @@ public class ViewProxy extends TiViewProxy {
 								.getEncodedPath()));
 						mDocView.setAdapter(new MuPDFPageAdapter(getActivity(),
 								this, core));
-						pageCount = core.countPages();
+						if (core != null){
+							pageCount = core.countPages();
+						} else {
+							pageCount = 0;
+						}
+
 						currentPage = 1;
 					}
 				} catch (Exception ex) {
@@ -214,7 +219,7 @@ public class ViewProxy extends TiViewProxy {
 				return;
 			mDocView.setScrollingDirectionHorizontal(value);
 		}
-		
+
 		public void onSearch(KrollFunction callback) {
 			mSearchCallback = callback;
 		}
@@ -323,7 +328,7 @@ public class ViewProxy extends TiViewProxy {
 	public void setScrollingDirection(int direction) {
 		getPDFReaderView().setScrollingDirectionHorizontal(direction == MupdfModule.DIRECTION_HORIZONTAL);
 	}
-	
+
 	@Kroll.method
 	public void onSearch(KrollFunction callback) {
 		getPDFReaderView().onSearch(callback);

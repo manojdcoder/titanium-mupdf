@@ -2,8 +2,8 @@
 .apt_generated
 tmp
 bin
-build
-/dist/mupdf.jar
-/libs/armeabi/libcom.mykingdom.mupdf.so
-/libs/armeabi-v7a/libcom.mykingdom.mupdf.so
-/libs/x86/libcom.mykingdom.mupdf.so
+android/build
+android/libs
+android/dist/mupdf.jar
+android/java-sources.txt
+android/build.properties
